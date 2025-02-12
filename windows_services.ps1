@@ -45,9 +45,9 @@ Try {
         $serviceExists = Get-Service -Name $Service -ErrorAction SilentlyContinue
         if (-not $serviceExists) {
             Write-Host "Service '$Service' not found." -ForegroundColor Red
-            exit
+            continue
         }
-        
+        else{        
         # Set the service to Automatic
         Set-Service -Name $Service -StartupType Automatic
         Write-Host "Service '$Service' set to Automatic."
@@ -57,6 +57,7 @@ Try {
         Set-ItemProperty -Path $regPath -Name "DelayedAutoStart" -Value 1
         
         Write-Host "Service '$Service' set to Automatic (Delayed Start)." -ForegroundColor Green
+        }
         $counter++
     }
     
