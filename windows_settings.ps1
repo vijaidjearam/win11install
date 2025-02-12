@@ -1,58 +1,64 @@
 $WarningPreference = 'SilentlyContinue'
+write-host "Entering Windows-settings Configuration Stage" 
+
+Function RequireAdmin {
+	If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
+		Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $PSCommandArgs" -Verb RunAs
+		Exit
+	}
+}
+$FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_chocolatey_transcript.txt"
+Start-Transcript -path $FileName -NoClobber
+$repopath = Get-ItemPropertyValue -Path 'HKCU:\repopath' -Name path
+iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.psm1'))
+
+$settings = @()
+$PSCommandArgs = @()
+
+Function AddOrRemoveSetting($setting) {
+	If ($setting[0] -eq "!") {
+		# If the name starts with exclamation mark (!), exclude the app from selection
+		$script:settings = $script:settings | Where-Object { $_ -ne $setting.Substring(1) }
+	} ElseIf ($settings -ne "") {
+		# Otherwise add the app
+		$script:apps += $setting
+	}
+}
+
+
 try
 {
-$repopath = Get-ItemPropertyValue -Path 'HKCU:\repopath' -Name path
-iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings_essentials.ps1'))
-write-host "Entering Windows-settings Configuration Stage" 
-$setting = @(
-"set-ntpserver_urca",
-#Afficher l’extension des noms de fichiers dans l’explorateur. C’est important pour le développement
-"Set-WindowsExplorerOptions -EnableShowHiddenFilesFoldersDrives",
-#"Set-WindowsExplorerOptions -EnableShowProtectedOSFiles",
-"Set-WindowsExplorerOptions -EnableShowFileExtensions",
-"Set-WindowsExplorerOptions -EnableShowFullPathInTitleBar",
-"Set-WindowsExplorerOptions -DisableOpenFileExplorerToQuickAccess",
-"Set-WindowsExplorerOptions -DisableShowRecentFilesInQuickAccess",
-"Set-WindowsExplorerOptions -DisableShowFrequentFoldersInQuickAccess",
-"Set-WindowsExplorerOptions -EnableSnapAssist",
-#Activer les accès anonymes aux partages samba
-"AllowInsecureGuestAuth",
-#Désactiver l’arrêt des disques durs, la mise en veille. Pour la veille prolongée/veille hybride, voici comment la désactiver pour gagner quelques gigas :
-"power_config",
-#Faire en sorte que la barre des tâches n’affiche que des petites icônes, pas besoin d’avoir des icônes de 48×48 de large : cela occupe l’affichage pour rien
-"Set-TaskbarOptions -Lock -NoAutoHide -Size Small",
-"set-desktop-icon-small",
-"Enable-RemoteDesktop",
-"open_ports",
-"Disable_automatic_updates_of_Microsoft_Store_apps",
-"Disable_Startup_Boost_Microsoft_Edge_for_All_Users",
-"active_setup_components",
-"enable_ntfx3",
-#Désactiver la protection du système (points de restauration) : nous gagnons alors de l’espace disque. Nous avons une image qui fonctionne désormais, et il n’est pas nécessaire de conserver des points de restauration.
-'Disable-ComputerRestore -Drive "c:\"',
-#point windows wsus server to 10.1.1.1( its a dummy address so windows will get updates anymore)
-"Set-Wsus",
-#Dans les tâches planifiées, il y a des tâches qui ne servent à rien : HP Support Assistant, par exemple, vu que nous le lancerons manuellement, ainsi que la tâche de défragmentation, mises à jour Google, ou encore l’OfficeTelemetryAgent (mouchard d’Office). Donc effacer/désactiver celles qui ne servent à rien 
-"disable-scheduledtasks",
-#A titre d’exemple de simplification de la UI, aller dans les paramètres avancés,sélectionner « Ajuster pour obtenir les meilleures performances pour lesprogrammes » et cochez dans la liste dessous « Afficher des miniatures au lieu d’icônes », ainsi que « Lisser les polices d’écran ».
-"performance_options_visual_effects",
-#disable news and interests in taskbar
-"dontdisplaynewsaninterestsintaskbar",
-#pin office apps shortcut to taskbar
-"pin-to-taskbar",
-#Apply google chrome policy settings
-"googlechrome-policy",
-# Disable Google Chrome Turn on ad privacy feature, source: https://github.com/letsdoautomation/powershell
-"DisableGoogleChromeTurnOnAdPrivacyFeature",
-#Disable Microsoft Edge first run wizard
-"DisableMicrosoftEdgeFirstRunWizard",
-# Change default Google Chrome search provider
-"ChangeDefaultGoogleChromeSearchProviderandskipbrowsersignin",
-# Set-default file associations
-"set-file_associations"
-)
 
-$setting | foreach {
+$i = 0
+While ($i -lt $args.Length) {
+	If ($args[$i].ToLower() -eq "-include") {
+		# Resolve full path to the included file
+		$include = Resolve-Path $args[++$i] -ErrorAction Stop
+		$PSCommandArgs += "-include `"$include`""
+		# Import the included file as a module
+		Import-Module -Name $include -ErrorAction Stop
+	} ElseIf ($args[$i].ToLower() -eq "-preset") {
+		# Resolve full path to the preset file
+		$preset = Resolve-Path $args[++$i] -ErrorAction Stop
+		$PSCommandArgs += "-preset `"$preset`""
+		# Load tweak names from the preset file
+		Get-Content $preset -ErrorAction Stop | ForEach-Object { AddOrRemoveTweak($_.Split("#")[0].Trim()) }
+	} ElseIf ($args[$i].ToLower() -eq "-log") {
+		# Resolve full path to the output file
+		$log = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($args[++$i])
+		$PSCommandArgs += "-log `"$log`""
+		# Record session to the output file
+		Start-Transcript $log
+	} Else {
+		$PSCommandArgs += $args[$i]
+		# Load tweak names from command line
+		AddOrRemoveTweak($args[$i])
+	}
+	$i++
+}
+
+
+$settings | ForEach-Object {
 try{
 Invoke-Expression $_ |Out-Null
 write-host $_ "---------------------OK" -ForegroundColor Green
@@ -71,10 +77,9 @@ Restart-Computer
 catch
 {
 write-host "Stage: windows_settings Failed" -ForegroundColor Red
-Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value windows_settings
+Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'windows_settings'
 Set-Runonce
 Stop-Transcript
 Pause
 
 }
-
