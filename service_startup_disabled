@@ -1,0 +1,28 @@
+### To exclude a settings place "!" before the settings
+### For Comments use "#"
+AdobeFlashPlayerUpdateSvc
+AdobeARMservice
+gupdate
+Wsearch
+WMPNetworkSvc
+SCardSvr
+DiagTrack
+SharedAccess 
+WbioSrvc
+BDESVC
+Wlansvc
+Wwansvc 
+ehSched 
+ehRecvr
+Mcx2Svc 
+SCPolicySvc
+gupdate
+gupdatem
+edgeupdate
+edgeupdatem
+MicrosoftEdgeElevationService
+MessagingService_ab44f
+GoogleChromeElevationService
+AMD Crash Defender Service
+AMD External Events Utility
+Themes
