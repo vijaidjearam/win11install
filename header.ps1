@@ -136,9 +136,9 @@ Switch ($stage)
     'windows_settings'
     {
         write-host "Entering Stage: $stage" -ForegroundColor Green
-        $FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
+        #$FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
         $LogFileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_log.log"
-        Start-Transcript -path $FileName -NoClobber
+        #Start-Transcript -path $FileName -NoClobber
         iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.ps1'))| Out-File $env:TEMP\windows_settings.ps1
         iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.psm1'))| Out-File $env:TEMP\windows_settings.psm1
         powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\windows_settings.psm1 -preset C:\Windows\Setup\Scripts\windows_settings.txt -log $LogFileName
@@ -148,8 +148,8 @@ Switch ($stage)
     {
         write-host "Entering Stage: $stage" -ForegroundColor Green
         $FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
-        $LogFileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_log.log"
-        Start-Transcript -path $FileName -NoClobber
+        #$LogFileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_log.log"
+        #Start-Transcript -path $FileName -NoClobber
         ((New-Object System.Net.WebClient).DownloadString($repopath+"win10_debloat.ps1")) | Out-File $env:TEMP\win10_debloat.ps1
         ((New-Object System.Net.WebClient).DownloadString($repopath+"win10_debloat.psm1"))| Out-File $env:TEMP\win10_debloat.psm1
         powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\win10_debloat.psm1 -preset C:\Windows\Setup\Scripts\debloat_preset.txt -log $LogFileName
@@ -158,7 +158,7 @@ Switch ($stage)
         write-host "Stage: windows_debloat completed" -ForegroundColor Green
         Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'cleaning'
         Set-Runonce
-        Stop-Transcript
+        #Stop-Transcript
         Restart-Computer
     }
     'cleaning'
