@@ -20,7 +20,7 @@ Function AddOrRemoveSetting($setting) {
 		$script:settings = $script:settings | Where-Object { $_ -ne $setting.Substring(1) }
 	} ElseIf ($settings -ne "") {
 		# Otherwise add the app
-		$script:apps += $setting
+		$script:settings += $setting
 	}
 }
 
