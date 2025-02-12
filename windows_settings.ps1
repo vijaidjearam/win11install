@@ -1,5 +1,7 @@
 $WarningPreference = 'SilentlyContinue'
 write-host "Entering Windows-settings Configuration Stage" 
+$repopath = Get-ItemPropertyValue -Path 'HKCU:\repopath' -Name path
+iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.psm1'))
 
 Function RequireAdmin {
 	If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
@@ -7,10 +9,7 @@ Function RequireAdmin {
 		Exit
 	}
 }
-$FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_chocolatey_transcript.txt"
-Start-Transcript -path $FileName -NoClobber
-$repopath = Get-ItemPropertyValue -Path 'HKCU:\repopath' -Name path
-iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.psm1'))
+
 
 $settings = @()
 $PSCommandArgs = @()
