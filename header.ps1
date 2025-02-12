@@ -103,11 +103,11 @@ Switch ($stage)
     'chocolatey_apps'
     {
         write-host "Entering Stage: $stage" -ForegroundColor Green
-        #$FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
+        $LogFileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_log.log"
         #Start-Transcript -path $FileName -NoClobber
         ((New-Object System.Net.WebClient).DownloadString($repopath+"chocolatey.ps1")) | Out-File $env:TEMP\chocolatey.ps1
         # Inserting chocolatey app txt file to unattend XML
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\chocolatey.ps1 -preset C:\Windows\Setup\Scripts\chocolatey-apps.txt
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\chocolatey.ps1 -preset C:\Windows\Setup\Scripts\chocolatey-apps.txt -log $LogFileName
         #((New-Object System.Net.WebClient).DownloadString($repopath+"chocolatey-apps.txt"))| Out-File $env:TEMP\chocolatey-apps.txt
         #powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\chocolatey.ps1 -preset $env:TEMP\chocolatey-apps.txt
         
@@ -137,20 +137,22 @@ Switch ($stage)
     {
         write-host "Entering Stage: $stage" -ForegroundColor Green
         $FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
+        $LogFileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_log.log"
         Start-Transcript -path $FileName -NoClobber
         iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.ps1'))| Out-File $env:TEMP\windows_settings.ps1
         iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.psm1'))| Out-File $env:TEMP\windows_settings.psm1
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\windows_settings.psm1 -preset C:\Windows\Setup\Scripts\windows_settings.txt
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\windows_settings.psm1 -preset C:\Windows\Setup\Scripts\windows_settings.txt -log $LogFileName
    
     }
     'windows_debloat'
     {
         write-host "Entering Stage: $stage" -ForegroundColor Green
         $FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
+        $LogFileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_log.log"
         Start-Transcript -path $FileName -NoClobber
         ((New-Object System.Net.WebClient).DownloadString($repopath+"win10_debloat.ps1")) | Out-File $env:TEMP\win10_debloat.ps1
         ((New-Object System.Net.WebClient).DownloadString($repopath+"win10_debloat.psm1"))| Out-File $env:TEMP\win10_debloat.psm1
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\win10_debloat.psm1 -preset C:\Windows\Setup\Scripts\debloat_preset.txt
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\win10_debloat.psm1 -preset C:\Windows\Setup\Scripts\debloat_preset.txt -log $LogFileName
         #((New-Object System.Net.WebClient).DownloadString($repopath+"debloat_preset.txt"))| Out-File $env:TEMP\debloat_preset.txt
         # powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\win10_debloat.psm1 -preset $env:TEMP\debloat_preset.txt
         write-host "Stage: windows_debloat completed" -ForegroundColor Green
