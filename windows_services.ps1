@@ -41,16 +41,22 @@ Try {
     foreach ($item in $service_startup_delayed_auto) {
         Write-Progress -Activity 'Setting service startup to delayed auto' -CurrentOperation $item -PercentComplete (($counter / $service_startup_delayed_auto.count) * 100)
         Start-Sleep -Milliseconds 200
-        if (Get-Service $item -ErrorAction SilentlyContinue) {
-            $service = $item
-            $command = "sc.exe config $Service start= delayed-auto"
-            $Output = Invoke-Expression -Command $Command
-            if ($LASTEXITCODE -ne 0) {
-                Write-Host "$Computer : Failed to set $Service to delayed start. More details: $Output" -ForegroundColor Red
-            } else {
-                Write-Host "Successfully changed $Service service to delayed start" -ForegroundColor Green
-            }
+        # Check if the service exists
+        $serviceExists = Get-Service -Name $Service -ErrorAction SilentlyContinue
+        if (-not $serviceExists) {
+            Write-Host "Service '$Service' not found." -ForegroundColor Red
+            exit
         }
+        
+        # Set the service to Automatic
+        Set-Service -Name $Service -StartupType Automatic
+        Write-Host "Service '$Service' set to Automatic."
+        
+        # Modify the registry to enable Delayed Start
+        $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\$Service"
+        Set-ItemProperty -Path $regPath -Name "DelayedAutoStart" -Value 1
+        
+        Write-Host "Service '$Service' set to Automatic (Delayed Start)." -ForegroundColor Green
         $counter++
     }
     
