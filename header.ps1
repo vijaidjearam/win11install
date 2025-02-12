@@ -1,5 +1,5 @@
 $repopath = Get-ItemPropertyValue -Path 'HKCU:\repopath' -Name path
-iex ((New-Object System.Net.WebClient).DownloadString($repopath+"windows_settings_essentials.ps1"))
+iex ((New-Object System.Net.WebClient).DownloadString($repopath+"windows_settings.psm1"))
 $WarningPreference = 'SilentlyContinue'
 
 # Change the name of the pc to IUT-serialnumber
