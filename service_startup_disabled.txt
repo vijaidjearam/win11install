@@ -1,4 +1,4 @@
-### To exclude a settings place "!" before the settings
+### To exclude a service place "!" before the settings
 ### For Comments use "#"
 AdobeFlashPlayerUpdateSvc
 AdobeARMservice
