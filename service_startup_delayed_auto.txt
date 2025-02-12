@@ -1,0 +1,22 @@
+### To exclude a settings place "!" before the settings
+### For Comments use "#"
+#Connaissance des emplacements réseau
+nlasvc
+#Gestionnaire de connexion automatique d’accès distant
+RasAuto
+#Gestionnaire de connexions d’accès distant 
+RasMan 
+#Infrastructure de gestion Windows
+Winmgmt 
+#Office  Source Engine
+ose 
+#Office Software Protection Platform
+osppsvc
+#Planificateur de classes multimédias
+MMCSS 
+#Protection logicielle
+sppsvc 
+#Serveur 
+LanmanServer 
+#Service de l’Assistant Compatibilité des programmes
+PcaSvc 
