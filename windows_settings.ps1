@@ -70,7 +70,7 @@ write-host $_ "--------------Nok" -ForegroundColor Red
 write-host "Stage: windows_settings completed" -ForegroundColor Green
 Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'windows_debloat'
 Set-Runonce
-Stop-Transcript
+#Stop-Transcript
 Restart-Computer
 }
 catch
@@ -78,7 +78,7 @@ catch
 write-host "Stage: windows_settings Failed" -ForegroundColor Red
 Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'windows_settings'
 Set-Runonce
-Stop-Transcript
+#Stop-Transcript
 Pause
 
 }
