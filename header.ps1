@@ -106,8 +106,11 @@ Switch ($stage)
         #$FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
         #Start-Transcript -path $FileName -NoClobber
         ((New-Object System.Net.WebClient).DownloadString($repopath+"chocolatey.ps1")) | Out-File $env:TEMP\chocolatey.ps1
-        ((New-Object System.Net.WebClient).DownloadString($repopath+"chocolatey-apps.txt"))| Out-File $env:TEMP\chocolatey-apps.txt
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\chocolatey.ps1 -preset $env:TEMP\chocolatey-apps.txt
+        # Inserting chocolatey app txt file to unattend XML
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\chocolatey.ps1 -preset C:\Windows\Setup\Scripts\chocolatey-apps.txt
+        #((New-Object System.Net.WebClient).DownloadString($repopath+"chocolatey-apps.txt"))| Out-File $env:TEMP\chocolatey-apps.txt
+        #powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\chocolatey.ps1 -preset $env:TEMP\chocolatey-apps.txt
+        
     }
     'windowsupdate_initiate'
     {
@@ -145,8 +148,9 @@ Switch ($stage)
         Start-Transcript -path $FileName -NoClobber
         ((New-Object System.Net.WebClient).DownloadString($repopath+"win10_debloat.ps1")) | Out-File $env:TEMP\win10_debloat.ps1
         ((New-Object System.Net.WebClient).DownloadString($repopath+"win10_debloat.psm1"))| Out-File $env:TEMP\win10_debloat.psm1
-        ((New-Object System.Net.WebClient).DownloadString($repopath+"debloat_preset.txt"))| Out-File $env:TEMP\debloat_preset.txt
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\win10_debloat.psm1 -preset $env:TEMP\debloat_preset.txt
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\win10_debloat.psm1 -preset C:\Windows\Setup\Scripts\debloat_preset.txt
+        #((New-Object System.Net.WebClient).DownloadString($repopath+"debloat_preset.txt"))| Out-File $env:TEMP\debloat_preset.txt
+        # powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\win10_debloat.psm1 -preset $env:TEMP\debloat_preset.txt
         write-host "Stage: windows_debloat completed" -ForegroundColor Green
         Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'cleaning'
         Set-Runonce
