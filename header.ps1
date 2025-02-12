@@ -141,7 +141,7 @@ Switch ($stage)
         #Start-Transcript -path $FileName -NoClobber
         iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.ps1'))| Out-File $env:TEMP\windows_settings.ps1
         iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.psm1'))| Out-File $env:TEMP\windows_settings.psm1
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\windows_settings.psm1 -preset C:\Windows\Setup\Scripts\windows_settings.txt -log $LogFileName
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\windows_settings.ps1 -include $env:TEMP\windows_settings.psm1 -preset C:\Windows\Setup\Scripts\windows_settings.txt -log $LogFileName
    
     }
     'windows_debloat'
