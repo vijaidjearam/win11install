@@ -1,0 +1,5 @@
+AdobeFlashPlayerUpdateSvc
+AdobeARMs,ervice
+gupdate
+Wsearch
+WMPNetworkSvc
