@@ -72,7 +72,7 @@ $apps | ForEach-Object {
     }
     }
 write-host "Stage: chocolatey_apps completed" -ForegroundColor Green
-Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'windowsupdate_services'
+Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'windows_services'
 Set-Runonce
 Stop-Transcript
 Restart-Computer
