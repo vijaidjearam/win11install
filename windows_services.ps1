@@ -38,7 +38,7 @@ Try {
     }
     
     $counter = 1
-    foreach ($item in $service_startup_delayed_auto) {
+    foreach ($Service in $service_startup_delayed_auto) {
         Write-Progress -Activity 'Setting service startup to delayed auto' -CurrentOperation $item -PercentComplete (($counter / $service_startup_delayed_auto.count) * 100)
         Start-Sleep -Milliseconds 200
         # Check if the service exists
