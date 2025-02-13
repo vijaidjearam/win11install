@@ -1,7 +1,7 @@
 $WarningPreference = 'SilentlyContinue'
 write-host "Entering Windows-settings Configuration Stage" 
-$repopath = Get-ItemPropertyValue -Path 'HKCU:\repopath' -Name path
-iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.psm1'))
+# $repopath = Get-ItemPropertyValue -Path 'HKCU:\repopath' -Name path
+# iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.psm1'))
 
 Function RequireAdmin {
 	If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
