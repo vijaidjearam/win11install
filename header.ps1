@@ -139,8 +139,8 @@ Switch ($stage)
         #$FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
         $LogFileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_log.log"
         #Start-Transcript -path $FileName -NoClobber
-        iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.ps1'))| Out-File $env:TEMP\windows_settings.ps1
-        iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.psm1'))| Out-File $env:TEMP\windows_settings.psm1
+        ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.ps1'))| Out-File $env:TEMP\windows_settings.ps1
+        ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.psm1'))| Out-File $env:TEMP\windows_settings.psm1
         powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\windows_settings.ps1 -include $env:TEMP\windows_settings.psm1 -preset C:\Windows\Setup\Scripts\windows_settings.txt -log $LogFileName
    
     }
