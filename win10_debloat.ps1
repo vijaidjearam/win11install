@@ -56,4 +56,26 @@ While ($i -lt $args.Length) {
 }
 
 # Call the desired tweak functions
-$tweaks | ForEach-Object { Invoke-Expression $_ }
+$tweaks | ForEach-Object { 
+
+try{
+Invoke-Expression $_ |Out-Null
+# if there is an error run the loop with out Out-Null to see the error in detail
+# Invoke-Expression $_ 
+write-host $_ "---------------------OK" -ForegroundColor Green
+}
+catch{
+write-host  ""
+write-host $_ "--------------Nok" -ForegroundColor Red
+write-host "Stage: windows_settings Failed" -ForegroundColor Red
+Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'windows_debloat'
+Set-Runonce
+#Stop-Transcript
+Pause
+}
+}
+write-host "Stage: windows_settings completed" -ForegroundColor Green
+Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'cleaning'
+Set-Runonce
+#Stop-Transcript
+Restart-Computer
