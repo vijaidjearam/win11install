@@ -72,6 +72,7 @@ Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'windows_setti
 Set-Runonce
 #Stop-Transcript
 Pause
+Exit
 }
 }
 write-host "Stage: windows_settings completed" -ForegroundColor Green
