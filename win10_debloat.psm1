@@ -3450,7 +3450,6 @@ Function InstallThirdPartyBloat {
 # Uninstall Provisioned Package
 # hint: have removed  microsoft.windowscommunicationsapps which corresponds to windows mail and calendar app 
 Function UninstallProvisionedPackage {
-#Get-AppxProvisionedPackage -online | where-object {$_.packagename -notlike "*Microsoft.WindowsStore*"} | where-object {$_.packagename -notlike "*Microsoft.WindowsCalculator*"} | where-object {$_.packagename -notlike "*Microsoft.Windows.Photos*"} | where-object {$_.packagename -notlike "*Microsoft.MSPaint*"} | where-object {$_.packagename -notlike "*Microsoft.NET.Native.Runtime*"} | Remove-AppxProvisionedPackage -online
 $Keep = @(
     'Microsoft.WindowsStore'
     'Microsoft.WindowsCalculator'
@@ -3472,8 +3471,14 @@ $Keep = @(
     'Microsoft.WindowsCamera'
     'Microsoft.WindowsSoundRecorder'
     'WavesAudio.MaxxAudioProforDell2019'
+    'Microsoft.SecHealthUI'                
+    'Microsoft.StorePurchaseApp'
+    'Microsoft.WindowsNotepad'          
+    'Microsoft.WindowsTerminal'            
+    'MicrosoftWindows.Client.WebExperience'
+    'MicrosoftWindows.CrossDevice'         
+    'MSTeams'  
     )
-
 Get-AppxProvisionedPackage -Online | Where-Object { $Keep -notcontains $_.DisplayName } | Remove-AppxProvisionedPackage -Online
 }
 
