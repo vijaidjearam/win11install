@@ -32,23 +32,16 @@ Pause
 }
 }
 
-Function Test-RegistryValue($regkey, $name) 
-{
-    try
-    {
-        $exists = Get-ItemProperty $regkey $name -ErrorAction SilentlyContinue
-        Write-Host "Test-RegistryValue: $exists"
-        if (($exists -eq $null) -or ($exists.Length -eq 0))
-        {
-            return $false
-        }
-        else
-        {
-            return $true
-        }
-    }
-    catch
-    {
+function Test-RegistryValueExists {
+    param (
+        [string]$RegistryPath,
+        [string]$ValueName
+    )
+
+    try {
+        $exists = Get-ItemProperty -Path $RegistryPath -Name $ValueName -ErrorAction SilentlyContinue
+        return $null -ne $exists.$ValueName
+    } catch {
         return $false
     }
 }
@@ -56,8 +49,7 @@ Function Test-RegistryValue($regkey, $name)
 
 
 
-
-if(Test-RegistryValue ('HKCU:\osinstall_local','windowsupdateiteration'))
+if(Test-RegistryValueExists -RegistryPath 'HKCU:\osinstall_local' -ValueName 'windowsupdateiteration')
 {
  $iter= Get-ItemPropertyValue -Path 'HKCU:\osinstall_local' -Name windowsupdateiteration
  if ($iter -lt 5)
