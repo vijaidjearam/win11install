@@ -147,8 +147,8 @@ Switch ($stage)
     'windows_debloat'
     {
         write-host "Entering Stage: $stage" -ForegroundColor Green
-        $FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
-        #$LogFileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_log.log"
+        #$FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
+        $LogFileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_log.log"
         #Start-Transcript -path $FileName -NoClobber
         ((New-Object System.Net.WebClient).DownloadString($repopath+"win10_debloat.ps1")) | Out-File $env:TEMP\win10_debloat.ps1
         ((New-Object System.Net.WebClient).DownloadString($repopath+"win10_debloat.psm1"))| Out-File $env:TEMP\win10_debloat.psm1
