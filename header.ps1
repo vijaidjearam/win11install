@@ -154,7 +154,7 @@ Switch ($stage)
         ((New-Object System.Net.WebClient).DownloadString($repopath+"win10_debloat.psm1"))| Out-File $env:TEMP\win10_debloat.psm1
         powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\win10_debloat.psm1 -preset C:\Windows\Setup\Scripts\debloat_preset.txt -log $LogFileName
         #((New-Object System.Net.WebClient).DownloadString($repopath+"debloat_preset.txt"))| Out-File $env:TEMP\debloat_preset.txt
-        # powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\win10_debloat.psm1 -preset $env:TEMP\debloat_preset.txt
+        # powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\win10_debloat.ps1 -include $env:TEMP\win10_debloat.psm1 -include $env:TEMP\windows_settings.psm1 -preset $env:TEMP\debloat_preset.txt
         write-host "Stage: windows_debloat completed" -ForegroundColor Green
         Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'cleaning'
         Set-Runonce
