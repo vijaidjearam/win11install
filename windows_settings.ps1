@@ -59,9 +59,9 @@ While ($i -lt $args.Length) {
 $tweaks | ForEach-Object { 
 
 try{
-Invoke-Expression $_ |Out-Null
+# Invoke-Expression $_ |Out-Null
 # if there is an error run the loop with out Out-Null to see the error in detail
-# Invoke-Expression $_ 
+Invoke-Expression $_ 
 write-host $_ "---------------------OK" -ForegroundColor Green
 }
 catch{
