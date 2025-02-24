@@ -2,7 +2,7 @@
 #for comments use "#"
 7zip.install
 dotnetfx
-! adobereader --params &apos;&quot;/DesktopIcon /UpdateMode:4&quot;&apos;
+! adobereader --params '"/DesktopIcon /UpdateMode:4"'
 ! adobeshockwaveplayer
 ! ccleaner
 ! dellcommandupdate
