@@ -39,7 +39,7 @@ dotnetfx
 ! fusion-inventory
 ! laps-urca
 ! insight-student-urca
-! microsoft-teams.install --params &quot;&apos;/AllUsers /NoAutoStart&apos;&quot;
+! microsoft-teams.install --params "'/AllUsers /NoAutoStart'"
 ! velociraptor
 ! zoom
 ! defprof-urca
