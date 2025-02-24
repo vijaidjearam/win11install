@@ -1,47 +1,48 @@
-#To exclude a software package please add "#" before the software name
+#To exclude a software package please add "!" before the software name
+#for comments use "#"
 7zip.install
 dotnetfx
-adobereader --params '"/DesktopIcon /UpdateMode:4"'
-#adobeshockwaveplayer
-#ccleaner
-#dellcommandupdate
-#notepadplusplus
-#audacity
-#blender
-#scilab
-#ffmpeg
-#ganttproject
-#lame
-#maxima
-#filezilla
-#firefox
-#ublockorigin-firefox
-#flashplayeractivex
-#flashplayerplugin
-#foxitreader 
-#gimp
-#git
-googlechrome
-ublockorigin-chrome
-#libreoffice-fresh
-#pdfcreator
-#quicktime
-sublimetext4
-#totalcommander
-#vlc
-#vscode
-#office365
-#inkscape
-#office2019
-#projectpro2019
-#visiopro2019
-#fusion-inventory
-#laps-urca
-#insight-student-urca
-#microsoft-teams.install --params "'/AllUsers /NoAutoStart'"
-#velociraptor
-#zoom
-#defprof-urca
-#pdfxchangeeditor
-#xmind
-#cisco-anyconnect-sbl
+! adobereader --params &apos;&quot;/DesktopIcon /UpdateMode:4&quot;&apos;
+! adobeshockwaveplayer
+! ccleaner
+! dellcommandupdate
+! notepadplusplus
+! audacity
+! blender
+! scilab
+! ffmpeg
+! ganttproject
+! lame
+! maxima
+! filezilla
+! firefox
+! ublockorigin-firefox
+! flashplayeractivex
+! flashplayerplugin
+! foxitreader 
+! gimp
+! git
+! googlechrome
+! ublockorigin-chrome
+! libreoffice-fresh
+! pdfcreator
+! quicktime
+! sublimetext4
+! totalcommander
+! vlc
+! vscode
+! office365
+! inkscape
+! office2019
+! projectpro2019
+! visiopro2019
+! fusion-inventory
+! laps-urca
+! insight-student-urca
+! microsoft-teams.install --params &quot;&apos;/AllUsers /NoAutoStart&apos;&quot;
+! velociraptor
+! zoom
+! defprof-urca
+! pdfxchangeeditor
+! xmind
+! cisco-anyconnect-sbl
