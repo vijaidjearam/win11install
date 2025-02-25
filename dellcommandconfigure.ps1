@@ -12,18 +12,21 @@ write-host "setting $item was successfull" -ForegroundColor Green
 }
 elseif($LASTEXITCODE -eq 42){
 
-write-host "$item is not available or cannot be configured " -ForegroundColor Red
+write-host "$item is not available or cannot be configured " -ForegroundColor Yellow
 
 }
 elseif($LASTEXITCODE -eq 43){
 
-write-host "There was an error setting the option: $item " -ForegroundColor Red
+write-host "There was an error setting the option: $item " -ForegroundColor Yellow
 
 }
 elseif($LASTEXITCODE -eq 72){
 
-write-host "TpmActivation cannot be modified when TPM is OFF" -ForegroundColor Red
+write-host "TpmActivation cannot be modified when TPM is OFF" -ForegroundColor Yellow
 
+}
+elseif($LASTEXITCODE -eq 147){
+write-host "The Value is not supported on the system: $item " -ForegroundColor Yellow
 }
 elseif($LASTEXITCODE -eq 58 -or $LASTEXITCODE -eq 65 -or $LASTEXITCODE -eq 66 -or $LASTEXITCODE -eq 67 -or $LASTEXITCODE -eq 109)
 {
