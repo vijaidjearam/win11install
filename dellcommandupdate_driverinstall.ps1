@@ -38,6 +38,7 @@ try {
         # Set to run once on restart
         Set-Runonce
         Stop-Transcript
+        Pause
         Restart-Computer
     } else {
         throw "Dell Command Update driver installation failed with exit code: $exitCode"
