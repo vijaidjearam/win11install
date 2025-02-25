@@ -20,4 +20,15 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 - User-friendly interface
 
 ## Usage
+- Registryrunonce.ps1 -> $repopath = "https://raw.githubusercontent.com/vijaidjearam/win11install/master/" change the value according to your Repo
+- registry_run_once_install_win_with_recovery.ps1 -> $repopath = "https://raw.githubusercontent.com/vijaidjearam/win11install/master/" change the value according to your Repo
+- Autounattend-WinEdu.xml -> change the value in the Run synchronous command according to you Repo
+
+  ```xml
+  				<RunSynchronousCommand wcm:action="add">
+					<Order>1</Order>
+					<Path>powershell -NoLogo -Command &quot;(new-object System.Net.WebClient).DownloadFile(&apos;https://raw.githubusercontent.com/vijaidjearam/win11install/master/registryrunonce.ps1&apos;, &apos;c:\windows\temp\header.ps1&apos;)&quot;</Path>
+				</RunSynchronousCommand>  
+  ```
+
 
