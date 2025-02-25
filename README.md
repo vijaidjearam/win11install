@@ -21,7 +21,7 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 
 ## Usage
 - Registryrunonce.ps1 -> $repopath = "https://raw.githubusercontent.com/vijaidjearam/win11install/main/" change the value according to your Repo
-- Autounattend-WinEdu.xml -> change the value in the URI according to you Repo
+- Autounattend-WinEdu.xml -> change the value in the $uri according to you Repo
 
   ```xml
 	<File path="C:\Windows\Setup\Scripts\unattend-01.ps1">
