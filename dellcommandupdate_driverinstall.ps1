@@ -30,8 +30,7 @@ try {
 
 # Check installation success
 try {
-   # if ($? -and ($LASTEXITCODE -in @(0, 1, 5, 500))) {
-   if ($LASTEXITCODE -in @(0, 1, 5, 500)) {
+    if ($? -and ($LASTEXITCODE -in @(0, 1, 5, 500))) {
         Write-Host "Stage: dellcommandupdate_driverinstall completed" -ForegroundColor Green
         Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -Value 'dellcommandupdate_applyupdates'
 
