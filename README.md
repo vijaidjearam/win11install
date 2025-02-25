@@ -42,9 +42,9 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 	</File>
   ```
 ## Requirements
- - The script requires internet to download the file from github, Makesure the PC gets an IP via DHCP.
- - The script could fail to connect to the internet if the network card drivers are not found, to fix this issue download the appropriate driver packs and place it in the folder "drivers" in the root of the driver. The unattended XML points to the root:\drivers folder to check for drivers dusing the winpe setup.
+ - The script requires an internet connection to download the file from GitHub. Ensure the PC obtains an IP address via DHCP.
+ - If the network card drivers are missing, the script may fail to connect to the internet. To resolve this, download the appropriate driver packs and place them in root:\drivers. The unattended XML file is configured to check the root:\drivers folder for drivers during the WinPE setup.
  - Driver pack download:
-     - Dell : [https://www.dell.com/support/kbdoc/en-us/000180534/dell-family-driver-packs)(https://www.dell.com/support/kbdoc/en-us/000180534/dell-family-driver-packs)
-     - HP : [https://ftp.hp.com/pub/caps-softpaq/cmit/HP_WinPE_DriverPack.html](https://ftp.hp.com/pub/caps-softpaq/cmit/HP_WinPE_DriverPack.html)
+     - Dell : [Dell Family Driver Packs](https://www.dell.com/support/kbdoc/en-us/000180534/dell-family-driver-packs)
+     - HP : [HP WinPE Driver Pack](https://ftp.hp.com/pub/caps-softpaq/cmit/HP_WinPE_DriverPack.html)
 
