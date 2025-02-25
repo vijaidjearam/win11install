@@ -20,15 +20,26 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 - User-friendly interface
 
 ## Usage
-- Registryrunonce.ps1 -> $repopath = "https://raw.githubusercontent.com/vijaidjearam/win11install/master/" change the value according to your Repo
-- registry_run_once_install_win_with_recovery.ps1 -> $repopath = "https://raw.githubusercontent.com/vijaidjearam/win11install/master/" change the value according to your Repo
+- Registryrunonce.ps1 -> $repopath = "https://raw.githubusercontent.com/vijaidjearam/win11install/main/" change the value according to your Repo
 - Autounattend-WinEdu.xml -> change the value in the Run synchronous command according to you Repo
 
   ```xml
-  				<RunSynchronousCommand wcm:action="add">
-					<Order>1</Order>
-					<Path>powershell -NoLogo -Command &quot;(new-object System.Net.WebClient).DownloadFile(&apos;https://raw.githubusercontent.com/vijaidjearam/win11install/master/registryrunonce.ps1&apos;, &apos;c:\windows\temp\header.ps1&apos;)&quot;</Path>
-				</RunSynchronousCommand>  
+	<File path="C:\Windows\Setup\Scripts\unattend-01.ps1">
+	$attempts = 0
+	do {
+	    try {
+	        $uri = [uri]::new('https://raw.githubusercontent.com/vijaidjearam/win11install/main/registryrunonce.ps1');
+	        $file = 'c:\windows\temp\header.ps1';
+	        [System.Net.WebClient]::new().DownloadFile($uri,$file);
+	        Write-Host "Download successful!"
+	        break
+	    } catch {
+	        Write-Host "Download failed, retrying..."
+	        Start-Sleep -Seconds 5
+	    }
+	    $attempts++
+	} while ($attempts -lt 10)
+	</File>
   ```
 
 
