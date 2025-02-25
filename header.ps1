@@ -3,7 +3,7 @@ iex ((New-Object System.Net.WebClient).DownloadString($repopath+"windows_setting
 $WarningPreference = 'SilentlyContinue'
 
 # Change the name of the pc to IUT-serialnumber
-Invoke-Expression renamepcwithserialnumber
+# Invoke-Expression renamepcwithserialnumber
 
 if (test-path 'HKCU:\osinstall_local'){
 $stage = Get-ItemPropertyValue -Path 'HKCU:\osinstall_local' -Name stage
