@@ -1,6 +1,6 @@
 # Win11Install
 
-A script or tool to streamline the installation of Windows 11.
+A script to streamline the installation of Windows 11.
 
 ## Table of Contents
 
