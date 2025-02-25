@@ -13,7 +13,7 @@ $dcuCLI = "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe"
 # Configure advanced driver restore and show output
 try {
     Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$dcuCLI /configure -advancedDriverRestore=enable`"" -Wait
-    Write-Host "Dell Command Update configuration completed." -ForegroundColor Green
+    Write-Host "Dell Command Update Enable advancedDriverRestore ." -ForegroundColor Green
 } catch {
     Write-Host "Failed to configure Dell Command Update: $_" -ForegroundColor Red
     throw
