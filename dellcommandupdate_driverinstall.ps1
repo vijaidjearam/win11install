@@ -21,9 +21,9 @@ try {
 
 # Run driver installation and show output
 try {
-    $installProcess = Start-Process -FilePath $dcuCLI -ArgumentList "/driverInstall" -Wait -PassThru
-    $installProcess | ForEach-Object { Write-Host $_.StandardOutput.ReadToEnd() }
-    $exitCode = $installProcess.ExitCode
+    & "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe" /driverInstall
+    #$installProcess = Start-Process -FilePath $dcuCLI -ArgumentList "/driverInstall" -Wait -PassThru
+    #$exitCode = $installProcess.ExitCode
 } catch {
     Write-Host "Failed to start Dell Command Update driver installation: $_" -ForegroundColor Red
     throw
