@@ -50,6 +50,8 @@
 			</RunSynchronous>
 		</component>
 		<!-- Driver Locations Configuration -->
+		<!-- For Dell, Driver packs could be downloaded from "https://www.dell.com/support/kbdoc/en-us/000180534/dell-family-driver-packs" and must be placed in the root folder "drivers"-->
+		<!-- For HP, Driver packs could be downloaded from "https://ftp.hp.com/pub/caps-softpaq/cmit/HP_WinPE_DriverPack.html" and must be placed in the root folder "drivers"-->
 		<component name="Microsoft-Windows-PnpCustomizationsWinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 			<DriverPaths>
 				<!-- Common primary locations -->
