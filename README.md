@@ -17,7 +17,6 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 - Automated installation process
 - Pre-configured settings for optimal performance
 - Support for various hardware configurations
-- User-friendly interface
 
 ## Usage
 - Registryrunonce.ps1 -> $repopath = "https://raw.githubusercontent.com/vijaidjearam/win11install/main/" change the value according to your Repo
