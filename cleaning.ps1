@@ -33,6 +33,21 @@ Write-host "Cleaning Event Log"
 Get-EventLog -LogName * | ForEach { Clear-EventLog $_.Log }
 Write-host "Completed Cleaning Event Log" 
 }
+function Remove-WindowsOld {
+    $folderPath = "C:\Windows.old"
+    
+    if (Test-Path -Path $folderPath) {
+        Write-Host "Folder 'Windows.old' found. Removing..." -ForegroundColor Yellow
+        try {
+            Remove-Item -Path $folderPath -Recurse -Force
+            Write-Host "'Windows.old' has been successfully removed." -ForegroundColor Green
+        } catch {
+            Write-Host "An error occurred while removing 'Windows.old': $_" -ForegroundColor Red
+        }
+    } else {
+        Write-Host "'Windows.old' folder does not exist." -ForegroundColor Red
+    }
+}
 
 try
 {
@@ -51,8 +66,10 @@ choco source remove -n=chocolatey
 iex disableautosignin-info
 iex disable-autologon
 # Reset Administrator password to Blank
-Set-LocalUser -name Administrateur -Password ([securestring]::new())
+#Set-LocalUser -name Administrateur -Password ([securestring]::new())
 iex dontdisplaylastusername-on-logon
+#remove windows.old folder
+iex Remove-WindowsOld
 Stop-Transcript
 Write-host "The Next step is going to clear Temp File and eventlogs, check the log file for any error message and then continue: "
 Pause
