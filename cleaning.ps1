@@ -48,6 +48,23 @@ function Remove-WindowsOld {
         Write-Host "'Windows.old' folder does not exist." -ForegroundColor Red
     }
 }
+function Uninstall-DellCommandUpdate {
+    # Check if DellCommandUpdate is installed via Chocolatey
+    $package = choco list | Select-String -Pattern "DellCommandUpdate"
+
+    if ($package) {
+        Write-Host "'DellCommandUpdate' found, uninstalling..." -ForegroundColor Yellow
+        try {
+            choco uninstall DellCommandUpdate -y
+            Write-Host "'DellCommandUpdate' has been successfully uninstalled." -ForegroundColor Green
+        } catch {
+            Write-Host "An error occurred while uninstalling 'DellCommandUpdate': $_" -ForegroundColor Red
+        }
+    } else {
+        Write-Host "'DellCommandUpdate' is not installed via Chocolatey." -ForegroundColor Red
+    }
+}
+
 
 try
 {
@@ -56,12 +73,13 @@ Remove-Item -Path HKCU:\osinstall_local
 Remove-Item -Path HKCU:\repopath
 #dell command update pops up message in the taskbar if there is new driver updates, inspite of setting it to manual schedule update. 
 #so uninstall dell command update , if required it can be installed anytime using chocolatey.
-choco uninstall dellcommandupdate -y
+iex Uninstall-DellCommandUpdate
 #installing kaspersky at the end so that it doesnt block the script at the start up
 #choco install f-secure -y
 #choco install f-secure-autonome -y
+# Remove chocolatey source and forcing to use the choco local server
 choco source remove -n=chocolatey
-# iex dontdisplaylastusername-on-logon
+# remove autologon parameters
 iex disableautosignin-info
 iex disable-autologon
 # Reset Administrator password to Blank
