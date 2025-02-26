@@ -1,7 +1,7 @@
 # Delete Temp Files
 Function DeleteTempFiles {
-    Write-Host "Cleaning up temporary files..."
-    $tempfolders = @("C:\Windows\Temp\*", "C:\Windows\Prefetch\*", "C:\Documents and Settings\*\Local Settings\temp\*", "C:\Users\*\Appdata\Local\Temp\*")
+    Write-Host "Cleaning up temporary files and setup scripts..."
+    $tempfolders = @("C:\Windows\Temp\*", "C:\Windows\Prefetch\*", "C:\Documents and Settings\*\Local Settings\temp\*", "C:\Users\*\Appdata\Local\Temp\*","C:\Windows\Setup\Scripts\*")
     Remove-Item $tempfolders -force -recurse 2>&1 | Out-Null
 }
 
@@ -51,7 +51,6 @@ function Remove-WindowsOld {
 
 try
 {
-if (test-path C:\Windows\Setup\Scripts\SetupComplete.cmd){Remove-Item 'C:\Windows\Setup\Scripts\SetupComplete.cmd'}
 iex CleanWinSXS
 Remove-Item -Path HKCU:\osinstall_local
 Remove-Item -Path HKCU:\repopath
