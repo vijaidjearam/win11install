@@ -1,7 +1,7 @@
 # Delete Temp Files
 Function DeleteTempFiles {
     Write-Host "Cleaning up temporary files and setup scripts..."
-    $tempfolders = @("C:\Windows\Temp\*", "C:\Windows\Prefetch\*", "C:\Documents and Settings\*\Local Settings\temp\*", "C:\Users\*\Appdata\Local\Temp\*","C:\Windows\Setup\Scripts\*")
+    $tempfolders = @("C:\Windows\Temp\*", "C:\Windows\Prefetch\*", "C:\Documents and Settings\*\Local Settings\temp\*", "C:\Users\*\Appdata\Local\Temp\*","C:\Windows\Setup\Scripts\*","C:\8336500659725115574"")
     Remove-Item $tempfolders -force -recurse 2>&1 | Out-Null
 }
 
