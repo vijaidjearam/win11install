@@ -24,7 +24,7 @@ if ($LASTEXITCODE -in @(0, 1, 5, 500))
 else 
 {
     write-host "`nStage: dellcommandupdate_driverinstall Failed" -ForegroundColor Red
-    Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value dellcommandupdate_driverinstall
+    Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'dellcommandupdate_driverinstall'
     Set-Runonce
     Stop-Transcript
     Pause
