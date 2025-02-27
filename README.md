@@ -54,5 +54,5 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
   ## Ventoy-Config
 
   - Ventoy provides the modularity to add an autounttend.xml to a windows iso ( Without Ventoy we need an iso editor to incorporate the xml to the iso)
-  - below image shows how we can attribute and autounattend.xml to iso
+  - below image shows how we use *Ventoyplugson* utility to attribute an autounattend.xml to iso. 
   - ![ventoy-part](https://github.com/user-attachments/assets/cbc8e3fd-4be0-45ac-8f09-32fd08317d70)
