@@ -2,7 +2,7 @@
 Function DeleteTempFiles {
     Write-Host "Cleaning up temporary files and setup scripts..."
     # The folder C:\8336500659725115574 is created during dellcommandupdate /applyupdates
-    $tempfolders = @("C:\Windows\Temp\*", "C:\Windows\Prefetch\*", "C:\Documents and Settings\*\Local Settings\temp\*", "C:\Users\*\Appdata\Local\Temp\*","C:\Windows\Setup\Scripts\*","C:\8336500659725115574")
+    $tempfolders = @("C:\Windows\Temp\*", "C:\Windows\Prefetch\*", "C:\Documents and Settings\*\Local Settings\temp\*", "C:\Users\*\Appdata\Local\Temp\*","C:\Windows\Setup\Scripts\*","C:\8336500659725115574","C:\AMD","C:\Intel")
     Remove-Item $tempfolders -force -recurse 2>&1 | Out-Null
 }
 
