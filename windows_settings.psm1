@@ -768,7 +768,8 @@ function disable-scheduledtasks {
         "npcapwatchdog",
         "Scheduled Start",
 	"Tpm-Maintenance",
- 	"Tpm-PreAttestationHealthCheck"
+ 	"Tpm-PreAttestationHealthCheck",
+  	"CacheTask"
     )
 
     $temp | ForEach-Object {
