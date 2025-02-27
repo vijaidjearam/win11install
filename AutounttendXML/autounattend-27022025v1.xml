@@ -280,6 +280,7 @@ MessagingService_ab44f
 GoogleChromeElevationService
 AMD Crash Defender Service
 AMD External Events Utility
+Intel(R) TPM Provisioning Service
 Themes
 		</File>
 		<File path="C:\Windows\Setup\Scripts\service_startup_delayed_auto.txt">
