@@ -771,7 +771,8 @@ function disable-scheduledtasks {
  	"Tpm-PreAttestationHealthCheck",
   	"CacheTask",
    	"StartCN",
-    	"StartDVR"
+    	"StartDVR",
+     	"Secure-Boot-Update"
     )
 
     $temp | ForEach-Object {
