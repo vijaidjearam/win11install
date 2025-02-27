@@ -766,7 +766,9 @@ function disable-scheduledtasks {
         "BrightnessReset",
         "Adobe Acrobat Update Task",
         "npcapwatchdog",
-        "Scheduled Start"
+        "Scheduled Start",
+	"Tpm-Maintenance",
+ 	"Tpm-PreAttestationHealthCheck"
     )
 
     $temp | ForEach-Object {
