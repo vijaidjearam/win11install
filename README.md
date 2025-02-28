@@ -61,5 +61,6 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 
 ## Windows-boot-Analysis
   - The below image shows the boot analysis of the image prepared by the script.
-  - ![Windows-boot-analysis](https://github.com/user-attachments/assets/351299bb-bd74-4a55-89d4-4f88ae45fdc6)
+  -![Windows-boot-analysis](https://github.com/user-attachments/assets/eb774068-2f92-4ec1-9494-b7ab2e1844ae)
+
 
