@@ -129,6 +129,7 @@ flowchart TD
     X --> N
     Z --> N
 ```
+  - The *set-runonce* function at the end of each stage sets the *header.ps1* at the runonce in the registry.
 
 ## Windows-boot-Analysis
   - The below image shows the boot analysis of the image prepared by the script.
