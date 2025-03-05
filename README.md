@@ -9,6 +9,7 @@ A script to streamline the installation of Windows 11.
 - [Requirements](#requirements)
 - [Ventoy-config](#Ventoy-Config)
 - [Usage](#usage)
+- [Work-Flow](#Work-Flow)
 - [Windows-boot-Analysis](#Windows-boot-Analysis)
 - [Default-Profile](#Default-Profile)
 
@@ -68,6 +69,65 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 	</File>
   ```
 
+## Work-Flow
+
+```mermaid
+flowchart TD
+    A[Start] --> B{Check Registry Path HKCU:\osinstall_local}
+    B -->|Exists| C[Get Current Stage]
+    B -->|Does Not Exist| D[Initial Setup]
+    
+    D --> E[Start Transcript]
+    E --> F[Load Power Config]
+    F --> G[Install Chocolatey]
+    G --> H[Configure Chocolatey Internal Server]
+    H --> I[Enable Insecure Guest Logons]
+    I --> J{Detect Manufacturer}
+    
+    J -->|Dell| K[Set Stage to Dell Command Update Driver Install]
+    J -->|HP| L[Set Stage to HP Install]
+    J -->|Other| M[Set Stage to Chocolatey Apps]
+    
+    C --> N{Switch Stage}
+    
+    N -->|dellcommandupdate_driverinstall| O[Dell Command Update Driver Install]
+    N -->|dellcommandupdate_applyupdates| P[Dell Command Update Apply Updates]
+    N -->|dellcommandconfigure| Q[Dell Command Configure]
+    N -->|hpia_install| R[HP Install Assistant]
+    N -->|Hpia_driverinstall| S[HP Driver Install]
+    N -->|chocolatey_apps| T[Install Chocolatey Apps]
+    N -->|windowsupdate_initiate| U[Initiate Windows Update]
+    N -->|windowsupdate_followup| V[Follow Up Windows Update]
+    N -->|windows_services| W[Configure Windows Services]
+    N -->|windows_settings| X[Configure Windows Settings]
+    N -->|windows_debloat| Y[Windows Debloat]
+    N -->|cleaning| Z[System Cleaning]
+    
+    O --> AA[Set Runonce]
+    P --> AA[Set Runonce]
+    Q --> AA[Set Runonce] 
+    R --> AA[Set Runonce] 
+    S --> AA[Set Runonce] 
+    T --> AA[Set Runonce] 
+    U --> AA[Set Runonce] 
+    V --> AA[Set Runonce] 
+    W --> AA[Set Runonce] 
+    X --> AA[Set Runonce] 
+    Y --> AA[Set Runonce]
+    AA --> AB[Restart Computer]
+    
+    O --> N
+    P --> N
+    Q --> N
+    R --> N
+    S --> N
+    T --> N
+    U --> N
+    V --> N
+    W --> N
+    X --> N
+    Z --> N
+```
 
 ## Windows-boot-Analysis
   - The below image shows the boot analysis of the image prepared by the script.
