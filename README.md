@@ -8,7 +8,7 @@ A script to streamline the installation of Windows 11.
 - [Features](#features)
 - [Requirements](#requirements)
 - [Ventoy-config](#Ventoy-Config)
-- [Usage](#usage)
+- [Customisation](#Customisation)
 - [Work-Flow](#Work-Flow)
 - [Windows-boot-Analysis](#Windows-boot-Analysis)
 - [Default-Profile](#Default-Profile)
@@ -46,8 +46,7 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
   - The *unattended.xml* has a logic implemented to search for the drivers during the windows install.
   - ![image](https://github.com/user-attachments/assets/58ba34e8-ce76-4769-a42d-6e58be252ad7)
     
-## Usage
-- >[!Caution]
+## Customisation
 - When you Fork the registry please change the below paramaters for adapting with your Repository.
 - Registryrunonce.ps1 -> *$repopath = "https://raw.githubusercontent.com/vijaidjearam/win11install/main/"* change the value according to your Repo
 - Autounattend-WinEdu.xml -> change the value in the *$uri* according to you Repo
