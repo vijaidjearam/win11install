@@ -10,6 +10,7 @@ A script to streamline the installation of Windows 11.
 - [Usage](#usage)
 - [Ventoy-config](#Ventoy-Config)
 - [Windows-boot-Analysis](#Windows-boot-Analysis)
+- [Default-Profile](#Default-Profile)
 
   
 ## Introduction
@@ -62,5 +63,8 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 ## Windows-boot-Analysis
   - The below image shows the boot analysis of the image prepared by the script.
   -![Windows-boot-analysis](https://github.com/user-attachments/assets/eb774068-2f92-4ec1-9494-b7ab2e1844ae)
+
+## Default-Profile
+ - Refer the following [Link](https://vijaidjearam.github.io/blog/windows11/2025/02/28/Copy-desired-profile-to-Default-Profile.html)
 
 
