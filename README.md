@@ -125,8 +125,7 @@ flowchart TD
   - The *set-runonce* function at the end of each stage sets the *$env:TEMP\header.ps1*  at the runonce in the registry.
 
 ## Windows-boot-Analysis
-  - The below image shows the boot analysis of the image prepared by the script.
-  -![Windows-boot-analysis](https://github.com/user-attachments/assets/eb774068-2f92-4ec1-9494-b7ab2e1844ae)
+  - Follow this [link](https://vijaidjearam.github.io/blog/windows-finetuning/2024/03/20/Slow_startup_Troubleshooting.html) to analyse the boot time
 
 ## Default-Profile
  - Refer the following [Link](https://vijaidjearam.github.io/blog/windows11/2025/02/28/Copy-desired-profile-to-Default-Profile.html)
