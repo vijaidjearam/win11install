@@ -860,8 +860,114 @@ foreach($setting in $settings){
     $registry.Dispose()
 }
 }
+function firefox-policy {
+    New-Item -ItemType Directory -Force -Path $env:TEMP\Scripts\GPO\
+    $WebClient = New-Object System.Net.WebClient
 
-function googlechrome-policy{
+    # Télécharger les modèles de stratégie de groupe pour Firefox
+    $WebClient.DownloadFile("https://github.com/mozilla/policy-templates/releases/download/v6.7/policy_templates_v6.7.zip", "$env:TEMP\Scripts\GPO\FirefoxPolicy.zip")
+
+    # Extraire les fichiers ADMX et ADML
+    Expand-Archive "$env:TEMP\Scripts\GPO\FirefoxPolicy.zip" -DestinationPath "$env:TEMP\Scripts\GPO" -Force
+    cp "$env:TEMP\Scripts\GPO\policy_templates\windows\admx\*.admx" C:\Windows\PolicyDefinitions\ -Force
+
+    $path = "C:\Windows\PolicyDefinitions\fr-FR\"
+    if (!(Test-Path $path)) {
+        New-Item -ItemType Directory -Force -Path C:\Windows\PolicyDefinitions\fr-FR\
+    }
+    cp "$env:TEMP\Scripts\GPO\policy_templates\windows\admx\fr-FR\*.adml" C:\Windows\PolicyDefinitions\fr-FR\ -Force
+
+    # Création de la clé de registre pour Firefox
+    if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Mozilla)) {
+        New-Item -Path HKLM:\SOFTWARE\Policies\ -Name Mozilla
+    }
+    if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox)) {
+        New-Item -Path HKLM:\SOFTWARE\Policies\Mozilla\ -Name Firefox
+    }
+    if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ExtensionSettings)) {
+        New-Item -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ -Name ExtensionSettings
+    }
+
+    # Ajouter l'extension Privacy Badger
+    $FirefoxExtensions = '{
+        "*": {
+            "blocked_install_message": "Installation interdite par la politique de l''entreprise",
+            "install_sources": ["https://addons.mozilla.org/"]
+        },
+        "jid1-MnnxcxisBPnSXQ@jetpack": {
+            "installation_mode": "force_installed",
+            "install_url": "https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi"
+        }
+    }'
+
+
+    # Appliquer la configuration d'extension
+    Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ExtensionSettings -Name "*" -Value $FirefoxExtensions -Force
+
+    # Définir la page d'accueil de Firefox
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ -Name "Homepage" -Value 'https://www.iut-troyes.univ-reims.fr/' -Force
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ -Name "HomepageLocked" -Value 1 -Force
+
+    # Empêcher la modification de la page d'accueil
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ -Name "DisableHomePageEditing" -Value 1 -Force
+    
+    # Supprimer le dossier temporaire
+    Remove-Item -Path "$env:TEMP\Scripts\GPO\" -Recurse -Force
+
+    Write-Host "Configuration des stratégies Firefox terminée avec Privacy Badger installé !"
+}
+
+
+function googlechrome-policy {
+    New-Item -ItemType Directory -Force -Path $env:TEMP\Scripts\GPO\
+    $WebClient = New-Object System.Net.WebClient
+
+    # Télécharger les modèles de stratégie de groupe pour Google Chrome
+    $WebClient.DownloadFile("https://dl.google.com/dl/edgedl/chrome/policy/policy_templates.zip", "$env:TEMP\Scripts\GPO\Browserpolicy_templates.zip")
+
+    # Extraire les fichiers ADMX et ADML
+    Expand-Archive "$env:TEMP\Scripts\GPO\Browserpolicy_templates.zip" -DestinationPath "$env:TEMP\Scripts\GPO" -Force
+    cp "$env:TEMP\Scripts\GPO\windows\admx\*.admx" C:\Windows\PolicyDefinitions\ -Force
+
+    $path = "C:\Windows\PolicyDefinitions\fr-FR\"
+    if (!(Test-Path $path)) {
+        New-Item -ItemType Directory -Force -Path C:\Windows\PolicyDefinitions\fr-FR\
+    }
+    cp "$env:TEMP\Scripts\GPO\windows\admx\fr-FR\*.adml" C:\Windows\PolicyDefinitions\fr-FR\ -Force
+
+    # Création des clés de registre pour Google Chrome
+    if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Google)) {
+        New-Item -Path HKLM:\SOFTWARE\Policies\ -Name Google
+    }
+    if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Google\Chrome)) {
+        New-Item -Path HKLM:\SOFTWARE\Policies\Google\ -Name Chrome
+    }
+    if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist)) {
+        New-Item -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name ExtensionInstallForcelist
+    }
+
+    # Ajouter Privacy Badger à la liste des extensions installées de force
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist -Name 1 -Value 'pkehgijcmpdhfbdbbnkijodmdjhbjlgp;https://clients2.google.com/service/update2/crx' -Force
+
+    # Définir la page d'accueil de Chrome
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name "HomepageLocation" -Value "https://www.iut-troyes.univ-reims.fr/" -Force
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name "RestoreOnStartup" -Value 4 -Force
+
+    if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Google\Chrome\RestoreOnStartupURLs)) {
+        New-Item -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name RestoreOnStartupURLs
+    }
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\RestoreOnStartupURLs -Name 1 -Value "https://www.iut-troyes.univ-reims.fr/" -Force
+
+    # Empêcher Chrome d'être défini comme navigateur par défaut
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name "DefaultBrowserSettingEnabled" -Value 0 -Force
+
+    # Supprimer le dossier temporaire
+    Remove-Item -Path "$env:TEMP\Scripts\GPO\" -Recurse -Force
+
+    Write-Host "Configuration des stratégies Google Chrome terminée avec Privacy Badger installé !"
+}
+
+function googlechrome-policy-old{
 New-Item -ItemType Directory -Force -Path $env:TEMP\Scripts\GPO\
 $WebClient = New-Object System.Net.WebClient
 $WebClient.DownloadFile("https://dl.google.com/dl/edgedl/chrome/policy/policy_templates.zip","$env:TEMP\Scripts\GPO\Browserpolicy_templates.zip")
