@@ -78,7 +78,7 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 config:
   theme: neo
   look: handDrawn
-  layout: fixed
+  layout: elk
 ---
 flowchart TD
     A["Start"] --> B{"Check Registry Path HKCU:\osinstall_local"}
