@@ -74,61 +74,49 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 
  - The *registryrunonce.ps1* is downloaded and saved as *header.ps1*, this script checks the connectivity of the internet and downloads the *header.ps1* from github and executes.
 ```mermaid
+---
+config:
+  theme: neo
+---
 flowchart TD
-    A[Start] --> B{Check Registry Path HKCU:\osinstall_local}
-    B -->|Exists| C[Get Current Stage]
-    B -->|Does Not Exist| D[Initial Setup]
-    
-    D --> E[Start Transcript]
-    E --> F[Load Power Config]
-    F --> G[Install Chocolatey]
-    G --> H[Configure Chocolatey Internal Server]
-    H --> I[Enable Insecure Guest Logons]
-    I --> J{Detect Manufacturer}
-    
-    J -->|Dell| K[Set Stage to Dell Command Update Driver Install]
-    J -->|HP| L[Set Stage to HP Install]
-    J -->|Other| M[Set Stage to Chocolatey Apps]
-    
-    C --> N{Switch Stage}
-    
-    N -->|dellcommandupdate_driverinstall| O[Dell Command Update Driver Install]
-    N -->|dellcommandupdate_applyupdates| P[Dell Command Update Apply Updates]
-    N -->|dellcommandconfigure| Q[Dell Command Configure]
-    N -->|hpia_install| R[HP Install Assistant]
-    N -->|Hpia_driverinstall| S[HP Driver Install]
-    N -->|chocolatey_apps| T[Install Chocolatey Apps]
-    N -->|windowsupdate_initiate| U[Initiate Windows Update]
-    N -->|windowsupdate_followup| V[Follow Up Windows Update]
-    N -->|windows_services| W[Configure Windows Services]
-    N -->|windows_settings| X[Configure Windows Settings]
-    N -->|windows_debloat| Y[Windows Debloat]
-    N -->|cleaning| Z[System Cleaning]
-    
-    O --> AA[Set Runonce]
-    P --> AA[Set Runonce]
-    Q --> AA[Set Runonce] 
-    R --> AA[Set Runonce] 
-    S --> AA[Set Runonce] 
-    T --> AA[Set Runonce] 
-    U --> AA[Set Runonce] 
-    V --> AA[Set Runonce] 
-    W --> AA[Set Runonce] 
-    X --> AA[Set Runonce] 
-    Y --> AA[Set Runonce]
-    AA --> AB[Restart Computer]
-    
-    O --> N
-    P --> N
-    Q --> N
-    R --> N
-    S --> N
-    T --> N
-    U --> N
-    V --> N
-    W --> N
-    X --> N
-    Z --> N
+    A["Start"] --> B{"Check Registry Path HKCU:\osinstall_local"}
+    B -- Exists --> C["Get Current Stage"]
+    B -- Does Not Exist --> D["Initial Setup"]
+    D --> E["Start Transcript"]
+    E --> F["Load Power Config"]
+    F --> G["Install Chocolatey"]
+    G --> H["Configure Chocolatey Internal Server"]
+    H --> I["Enable Insecure Guest Logons"]
+    I --> J{"Detect Manufacturer"}
+    J -- Dell --> K["Set Stage to Dell Command Update Driver Install"]
+    J -- HP --> L["Set Stage to HP Install"]
+    J -- Other --> M["Set Stage to Chocolatey Apps"]
+    C --> N{"Switch Stage"}
+    N -- dellcommandupdate_driverinstall --> O["Dell Command Update Driver Install"]
+    N -- dellcommandupdate_applyupdates --> P["Dell Command Update Apply Updates"]
+    N -- dellcommandconfigure --> Q["Dell Command Configure"]
+    N -- hpia_install --> R["HP Install Assistant"]
+    N -- Hpia_driverinstall --> S["HP Driver Install"]
+    N -- chocolatey_apps --> T["Install Chocolatey Apps"]
+    N -- windowsupdate_initiate --> U["Initiate Windows Update"]
+    N -- windowsupdate_followup --> V["Follow Up Windows Update"]
+    N -- windows_services --> W["Configure Windows Services"]
+    N -- windows_settings --> X["Configure Windows Settings"]
+    N -- windows_debloat --> Y["Windows Debloat"]
+    N -- cleaning --> Z["System Cleaning"]
+    O --> AA["Set Runonce"]
+    P --> AA
+    Q --> AA
+    R --> AA
+    S --> AA
+    T --> AA
+    U --> AA
+    V --> AA
+    W --> AA
+    X --> AA
+    Y --> AA
+    AA --> AB["Restart Computer"]
+    Z --> N1["End"]
 ```
   - The *set-runonce* function at the end of each stage sets the *$env:TEMP\header.ps1*  at the runonce in the registry.
 
