@@ -77,6 +77,8 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 ---
 config:
   theme: neo
+  look: handDrawn
+  layout: fixed
 ---
 flowchart TD
     A["Start"] --> B{"Check Registry Path HKCU:\osinstall_local"}
@@ -116,7 +118,11 @@ flowchart TD
     X --> AA
     Y --> AA
     AA --> AB["Restart Computer"]
+    AB --> A
     Z --> N1["End"]
+    K --> AA
+    L --> AA
+    M --> AA
 ```
   - The *set-runonce* function at the end of each stage sets the *$env:TEMP\header.ps1*  at the runonce in the registry.
 
