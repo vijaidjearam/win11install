@@ -37,7 +37,7 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
   - Ventoy provides the modularity to add an autounttend.xml to a windows iso ( Without Ventoy we need an iso editor to incorporate the xml to the iso)
   - Below image shows how we can use *Ventoyplugson* utility to attribute an autounattend.xml to iso. 
   - ![ventoy-part](https://github.com/user-attachments/assets/cbc8e3fd-4be0-45ac-8f09-32fd08317d70)
-  - [!CAUTION] Once after selecting the *unattended.xml* the harddisk will be formatted as instructed in the xml file.	
+  - ⚠️ Once after selecting the *unattended.xml* the harddisk will be formatted as instructed in the xml file.	
   - Some time the installation could fail during windows install while configuring the disk partition or at the starting of the header.ps1 due to lack of internet. This happens bacause of the lack of the proper driver.
   - To overcome the driver issue download the corresponding driver packs from the sites below and place it in the \ventoy-root *\drivers* folder.
      - Dell : [Dell Family Driver Packs](https://www.dell.com/support/kbdoc/en-us/000180534/dell-family-driver-packs)
