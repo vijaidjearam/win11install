@@ -74,6 +74,12 @@ Win11Install is designed to simplify the process of installing Windows 11 by aut
 
  - The *registryrunonce.ps1* is downloaded and saved as *header.ps1*, this script checks the connectivity of the internet and downloads the *header.ps1* from github and executes.
 ```mermaid
+---
+config:
+  theme: forest
+  look: neo
+  layout: dagre
+---
 flowchart TD
     A["Start"] --> B{"Check Registry Path HKCU:\osinstall_local"}
     B -- Exists --> C["Get Current Stage"]
