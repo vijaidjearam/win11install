@@ -3225,20 +3225,26 @@ Function InstallOneDrive {
 }
 
 function InstallOneDriveForAllUsers {
-    $OneDrivePath = [System.IO.Path]::Combine($env:LOCALAPPDATA, "Microsoft\OneDrive\OneDrive.exe")
+    # OneDrive Setup executable path (used for provisioning)
+    $OneDriveSetupPath = "C:\Windows\System32\OneDriveSetup.exe"
 
-    # Check if OneDrive exists at the given path
-    if (-Not (Test-Path $OneDrivePath)) {
-        Write-Host "Error: OneDrive is not installed at $OneDrivePath" -ForegroundColor Red
+    # If the 32-bit version exists, use that instead
+    if (-Not (Test-Path $OneDriveSetupPath)) {
+        $OneDriveSetupPath = "C:\Windows\SysWOW64\OneDriveSetup.exe"
+    }
+
+    # Check if the setup executable exists
+    if (-Not (Test-Path $OneDriveSetupPath)) {
+        Write-Host "Error: OneDrive setup executable not found in system directories." -ForegroundColor Red
         return
     }
 
     Write-Host "Provisioning OneDrive for all users..." -ForegroundColor Cyan
 
     try {
-        # Run the OneDrive setup with /allusers switch
-        Start-Process -FilePath $OneDrivePath -ArgumentList "/allusers" -NoNewWindow -Wait
-        Write-Host "OneDrive has been provisioned for all users successfully!" -ForegroundColor Green
+        # Run OneDrive setup with the /allusers switch
+        Start-Process -FilePath $OneDriveSetupPath -ArgumentList "/allusers" -NoNewWindow -Wait
+        Write-Host "OneDrive has been successfully provisioned for all users!" -ForegroundColor Green
     } catch {
         Write-Host "Error: Failed to provision OneDrive for all users." -ForegroundColor Red
         Write-Host $_.Exception.Message -ForegroundColor Yellow
@@ -3246,11 +3252,17 @@ function InstallOneDriveForAllUsers {
 }
 
 function UninstallOneDriveForAllUsers {
-    $OneDrivePath = [System.IO.Path]::Combine($env:LOCALAPPDATA, "Microsoft\OneDrive\OneDrive.exe")
+    # OneDrive Setup executable path (used for uninstallation)
+    $OneDriveSetupPath = "C:\Windows\System32\OneDriveSetup.exe"
 
-    # Check if OneDrive exists at the given path
-    if (-Not (Test-Path $OneDrivePath)) {
-        Write-Host "Error: OneDrive is not installed at $OneDrivePath" -ForegroundColor Red
+    # If the 32-bit version exists, use that instead
+    if (-Not (Test-Path $OneDriveSetupPath)) {
+        $OneDriveSetupPath = "C:\Windows\SysWOW64\OneDriveSetup.exe"
+    }
+
+    # Check if the setup executable exists
+    if (-Not (Test-Path $OneDriveSetupPath)) {
+        Write-Host "Error: OneDrive setup executable not found in system directories." -ForegroundColor Red
         return
     }
 
@@ -3259,15 +3271,17 @@ function UninstallOneDriveForAllUsers {
     Start-Sleep -Seconds 2
 
     Write-Host "Uninstalling OneDrive for all users..." -ForegroundColor Cyan
+
     try {
-        # Run the OneDrive uninstaller with the /uninstall switch
-        Start-Process -FilePath $OneDrivePath -ArgumentList "/uninstall" -NoNewWindow -Wait
-        Write-Host "OneDrive has been uninstalled for all users successfully!" -ForegroundColor Green
+        # Run OneDrive uninstaller with the /uninstall switch
+        Start-Process -FilePath $OneDriveSetupPath -ArgumentList "/uninstall" -NoNewWindow -Wait
+        Write-Host "OneDrive has been successfully uninstalled for all users!" -ForegroundColor Green
     } catch {
         Write-Host "Error: Failed to uninstall OneDrive for all users." -ForegroundColor Red
         Write-Host $_.Exception.Message -ForegroundColor Yellow
     }
 }
+
 # Uninstall default Microsoft applications
 Function UninstallMsftBloat {
 	Write-Output "Uninstalling default Microsoft applications..."
