@@ -577,6 +577,7 @@ DisableThumbsDBOnNetwork        # EnableThumbsDBOnNetwork
 
 ### Application Tweaks ###
 EnableOneDrive                # DisableOneDrive
+InstallOneDriveForAllUsers    #UninstallOneDriveForAllUsers
 #InstallOneDrive              # UninstallOneDrive    
 UninstallMsftBloat              # InstallMsftBloat
 #uninstallmicrosoftBloatapps     # installmicrosoftBloatapps 
