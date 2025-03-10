@@ -3225,7 +3225,7 @@ Function InstallOneDrive {
 }
 
 function InstallOneDriveForAllUsers {
-    $OneDrivePath = "C:\Program Files\Microsoft OneDrive\OneDrive.exe"
+    $OneDrivePath = [System.IO.Path]::Combine($env:APPDATA, "Local\Microsoft\OneDrive\OneDrive.exe")
 
     # Check if OneDrive exists at the given path
     if (-Not (Test-Path $OneDrivePath)) {
@@ -3246,7 +3246,7 @@ function InstallOneDriveForAllUsers {
 }
 
 function UninstallOneDriveForAllUsers {
-    $OneDrivePath = "C:\Program Files\Microsoft OneDrive\OneDrive.exe"
+    $OneDrivePath = [System.IO.Path]::Combine($env:APPDATA, "Local\Microsoft\OneDrive\OneDrive.exe")
 
     # Check if OneDrive exists at the given path
     if (-Not (Test-Path $OneDrivePath)) {
