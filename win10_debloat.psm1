@@ -3224,6 +3224,50 @@ Function InstallOneDrive {
 	Start-Process $onedrive -NoNewWindow
 }
 
+function InstallOneDriveForAllUsers {
+    $OneDrivePath = "C:\Program Files\Microsoft OneDrive\OneDrive.exe"
+
+    # Check if OneDrive exists at the given path
+    if (-Not (Test-Path $OneDrivePath)) {
+        Write-Host "Error: OneDrive is not installed at $OneDrivePath" -ForegroundColor Red
+        return
+    }
+
+    Write-Host "Provisioning OneDrive for all users..." -ForegroundColor Cyan
+
+    try {
+        # Run the OneDrive setup with /allusers switch
+        Start-Process -FilePath $OneDrivePath -ArgumentList "/allusers" -NoNewWindow -Wait
+        Write-Host "OneDrive has been provisioned for all users successfully!" -ForegroundColor Green
+    } catch {
+        Write-Host "Error: Failed to provision OneDrive for all users." -ForegroundColor Red
+        Write-Host $_.Exception.Message -ForegroundColor Yellow
+    }
+}
+
+function UninstallOneDriveForAllUsers {
+    $OneDrivePath = "C:\Program Files\Microsoft OneDrive\OneDrive.exe"
+
+    # Check if OneDrive exists at the given path
+    if (-Not (Test-Path $OneDrivePath)) {
+        Write-Host "Error: OneDrive is not installed at $OneDrivePath" -ForegroundColor Red
+        return
+    }
+
+    Write-Host "Stopping OneDrive process..." -ForegroundColor Cyan
+    Stop-Process -Name "OneDrive" -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 2
+
+    Write-Host "Uninstalling OneDrive for all users..." -ForegroundColor Cyan
+    try {
+        # Run the OneDrive uninstaller with the /uninstall switch
+        Start-Process -FilePath $OneDrivePath -ArgumentList "/uninstall" -NoNewWindow -Wait
+        Write-Host "OneDrive has been uninstalled for all users successfully!" -ForegroundColor Green
+    } catch {
+        Write-Host "Error: Failed to uninstall OneDrive for all users." -ForegroundColor Red
+        Write-Host $_.Exception.Message -ForegroundColor Yellow
+    }
+}
 # Uninstall default Microsoft applications
 Function UninstallMsftBloat {
 	Write-Output "Uninstalling default Microsoft applications..."
