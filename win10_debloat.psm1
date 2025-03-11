@@ -3243,7 +3243,7 @@ function InstallOneDriveForAllUsers {
 
     try {
         # Run OneDrive setup with the /allusers switch
-        Start-Process -FilePath $OneDriveSetupPath -ArgumentList "/allusers" -NoNewWindow -Wait
+        Start-Process -FilePath $OneDriveSetupPath -ArgumentList "/allusers" -NoNewWindow
         Write-Host "OneDrive has been successfully provisioned for all users!" -ForegroundColor Green
     } catch {
         Write-Host "Error: Failed to provision OneDrive for all users." -ForegroundColor Red
@@ -3274,7 +3274,7 @@ function UninstallOneDriveForAllUsers {
 
     try {
         # Run OneDrive uninstaller with the /uninstall switch
-        Start-Process -FilePath $OneDriveSetupPath -ArgumentList "/uninstall" -NoNewWindow -Wait
+        Start-Process -FilePath $OneDriveSetupPath -ArgumentList "/uninstall" -NoNewWindow
         Write-Host "OneDrive has been successfully uninstalled for all users!" -ForegroundColor Green
     } catch {
         Write-Host "Error: Failed to uninstall OneDrive for all users." -ForegroundColor Red
