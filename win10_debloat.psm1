@@ -3225,7 +3225,7 @@ Function InstallOneDrive {
 }
 
 function InstallOneDriveForAllUsers {
-    # OneDrive Setup executable path (used for provisioning)
+    # OneDrive Setup executable path
     $OneDriveSetupPath = "C:\Windows\System32\OneDriveSetup.exe"
 
     # If the 32-bit version exists, use that instead
@@ -3235,15 +3235,22 @@ function InstallOneDriveForAllUsers {
 
     # Check if the setup executable exists
     if (-Not (Test-Path $OneDriveSetupPath)) {
-        Write-Host "Error: OneDrive setup executable not found in system directories." -ForegroundColor Red
+        Write-Host "Error: OneDrive setup executable not found." -ForegroundColor Red
         return
     }
 
     Write-Host "Provisioning OneDrive for all users..." -ForegroundColor Cyan
 
     try {
-        # Run OneDrive setup with the /allusers switch
-        Start-Process -FilePath $OneDriveSetupPath -ArgumentList "/allusers" -NoNewWindow
+        # Start the process without -Wait to prevent blocking
+        $process = Start-Process -FilePath $OneDriveSetupPath -ArgumentList "/allusers" -NoNewWindow -PassThru
+
+        # Wait for process to exit by monitoring its ID
+        Write-Host "Waiting for OneDrive installation to complete..." -ForegroundColor Yellow
+        while (Get-Process | Where-Object { $_.Id -eq $process.Id }) {
+            Start-Sleep -Seconds 2
+        }
+
         Write-Host "OneDrive has been successfully provisioned for all users!" -ForegroundColor Green
     } catch {
         Write-Host "Error: Failed to provision OneDrive for all users." -ForegroundColor Red
@@ -3252,7 +3259,7 @@ function InstallOneDriveForAllUsers {
 }
 
 function UninstallOneDriveForAllUsers {
-    # OneDrive Setup executable path (used for uninstallation)
+    # OneDrive Setup executable path
     $OneDriveSetupPath = "C:\Windows\System32\OneDriveSetup.exe"
 
     # If the 32-bit version exists, use that instead
@@ -3260,21 +3267,28 @@ function UninstallOneDriveForAllUsers {
         $OneDriveSetupPath = "C:\Windows\SysWOW64\OneDriveSetup.exe"
     }
 
-    # Check if the setup executable exists
+    # Check if OneDrive setup executable exists
     if (-Not (Test-Path $OneDriveSetupPath)) {
-        Write-Host "Error: OneDrive setup executable not found in system directories." -ForegroundColor Red
+        Write-Host "Error: OneDrive setup executable not found." -ForegroundColor Red
         return
     }
 
-    Write-Host "Stopping OneDrive process..." -ForegroundColor Cyan
+    Write-Host "Stopping any running OneDrive processes..." -ForegroundColor Cyan
     Stop-Process -Name "OneDrive" -Force -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 2
 
     Write-Host "Uninstalling OneDrive for all users..." -ForegroundColor Cyan
 
     try {
-        # Run OneDrive uninstaller with the /uninstall switch
-        Start-Process -FilePath $OneDriveSetupPath -ArgumentList "/uninstall" -NoNewWindow
+        # Start the uninstall process without -Wait to avoid PowerShell hanging
+        $process = Start-Process -FilePath $OneDriveSetupPath -ArgumentList "/uninstall" -NoNewWindow -PassThru
+
+        # Wait for process to exit by monitoring its ID
+        Write-Host "Waiting for OneDrive uninstallation to complete..." -ForegroundColor Yellow
+        while (Get-Process | Where-Object { $_.Id -eq $process.Id }) {
+            Start-Sleep -Seconds 2
+        }
+
         Write-Host "OneDrive has been successfully uninstalled for all users!" -ForegroundColor Green
     } catch {
         Write-Host "Error: Failed to uninstall OneDrive for all users." -ForegroundColor Red
