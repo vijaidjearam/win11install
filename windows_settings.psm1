@@ -949,6 +949,12 @@ function googlechrome-policy {
     # Ajouter Privacy Badger à la liste des extensions installées de force
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist -Name 1 -Value 'pkehgijcmpdhfbdbbnkijodmdjhbjlgp;https://clients2.google.com/service/update2/crx' -Force
 
+    # Pinner l'extension Privacy Badger
+    if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Google\Chrome\PinnedExtensions)) {
+        New-Item -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name PinnedExtensions
+    }
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\PinnedExtensions -Name 1 -Value 'pkehgijcmpdhfbdbbnkijodmdjhbjlgp' -Force
+
     # Définir la page d'accueil de Chrome
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name "HomepageLocation" -Value "https://www.iut-troyes.univ-reims.fr/" -Force
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name "RestoreOnStartup" -Value 4 -Force
@@ -964,7 +970,7 @@ function googlechrome-policy {
     # Supprimer le dossier temporaire
     Remove-Item -Path "$env:TEMP\Scripts\GPO\" -Recurse -Force
 
-    Write-Host "Configuration des stratégies Google Chrome terminée avec Privacy Badger installé !"
+    Write-Host "Configuration des stratégies Google Chrome terminée avec Privacy Badger installé et épinglé !"
 }
 
 function googlechrome-policy-old{
