@@ -860,7 +860,7 @@ foreach($setting in $settings){
     $registry.Dispose()
 }
 }
-function firefox-policy {
+function firefox-policy() {
     New-Item -ItemType Directory -Force -Path $env:TEMP\Scripts\GPO\
     $WebClient = New-Object System.Net.WebClient
 
@@ -869,13 +869,13 @@ function firefox-policy {
 
     # Extraire les fichiers ADMX et ADML
     Expand-Archive "$env:TEMP\Scripts\GPO\FirefoxPolicy.zip" -DestinationPath "$env:TEMP\Scripts\GPO" -Force
-    cp "$env:TEMP\Scripts\GPO\policy_templates\windows\admx\*.admx" C:\Windows\PolicyDefinitions\ -Force
+    Copy-Item "$env:TEMP\Scripts\GPO\windows\*.admx" C:\Windows\PolicyDefinitions\ -Force
 
     $path = "C:\Windows\PolicyDefinitions\fr-FR\"
     if (!(Test-Path $path)) {
         New-Item -ItemType Directory -Force -Path C:\Windows\PolicyDefinitions\fr-FR\
     }
-    cp "$env:TEMP\Scripts\GPO\policy_templates\windows\admx\fr-FR\*.adml" C:\Windows\PolicyDefinitions\fr-FR\ -Force
+    Copy-Item "$env:TEMP\Scripts\GPO\windows\fr-FR\*.adml" C:\Windows\PolicyDefinitions\fr-FR\ -Force
 
     # Création de la clé de registre pour Firefox
     if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Mozilla)) {
@@ -884,39 +884,48 @@ function firefox-policy {
     if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox)) {
         New-Item -Path HKLM:\SOFTWARE\Policies\Mozilla\ -Name Firefox
     }
-    if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ExtensionSettings)) {
-        New-Item -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ -Name ExtensionSettings
+
+    # 🔥 Corriger la structure JSON pour les extensions
+    $FirefoxExtensions = @"
+{
+    "*": {
+        "blocked_install_message": "Installation interdite par la politique de l'entreprise",
+        "install_sources": ["https://addons.mozilla.org/"]
+    },
+    "jid1-MnnxcxisBPnSXQ@jetpack": {
+        "installation_mode": "force_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi"
+    }
+}
+"@
+    Write-Host "✅ Configuration des stratégies Firefox terminée avec Privacy Badger installé !"
+    # Créer les clés de registre pour Firefox si elles n'existent pas
+    if (!(Test-Path -Path "HKLM:\SOFTWARE\Policies\Mozilla")) {
+        New-Item -Path "HKLM:\SOFTWARE\Policies\" -Name "Mozilla" -Force
+    }
+    if (!(Test-Path -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox")) {
+        New-Item -Path "HKLM:\SOFTWARE\Policies\Mozilla\" -Name "Firefox" -Force
+    }
+    if (!(Test-Path -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\Homepage")) {
+        New-Item -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\" -Name "Homepage" -Force
     }
 
-    # Ajouter l'extension Privacy Badger
-    $FirefoxExtensions = '{
-        "*": {
-            "blocked_install_message": "Installation interdite par la politique de l''entreprise",
-            "install_sources": ["https://addons.mozilla.org/"]
-        },
-        "jid1-MnnxcxisBPnSXQ@jetpack": {
-            "installation_mode": "force_installed",
-            "install_url": "https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi"
-        }
-    }'
-
-
-    # Appliquer la configuration d'extension
-    Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ExtensionSettings -Name "*" -Value $FirefoxExtensions -Force
-
-    # Définir la page d'accueil de Firefox
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ -Name "Homepage" -Value 'https://www.iut-troyes.univ-reims.fr/' -Force
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ -Name "HomepageLocked" -Value 1 -Force
-
-    # Empêcher la modification de la page d'accueil
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Mozilla\Firefox\ -Name "DisableHomePageEditing" -Value 1 -Force
+    # Définir la page d'accueil
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\Homepage" -Name "URL" -Value "https://www.univ-reims.fr/iut-troyes/" -Force
     
+    # Verrouiller la page d'accueil
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\Homepage" -Name "Locked" -Value 1 -Force
+
+    # Définir la stratégie pour démarrer sur la page d'accueil verrouillée
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\Homepage" -Name "StartPage" -Value "homepage-locked" -Force
+
+    Write-Host "✅ Page d'accueil configurée avec succès !"
+
     # Supprimer le dossier temporaire
     Remove-Item -Path "$env:TEMP\Scripts\GPO\" -Recurse -Force
 
-    Write-Host "Configuration des stratégies Firefox terminée avec Privacy Badger installé !"
+    Write-Host "✅ Configuration des stratégies Firefox terminée avec Privacy Badger installé !"
 }
-
 
 function googlechrome-policy {
     New-Item -ItemType Directory -Force -Path $env:TEMP\Scripts\GPO\
