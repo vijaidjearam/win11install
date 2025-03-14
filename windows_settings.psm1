@@ -898,7 +898,10 @@ function firefox-policy() {
     }
 }
 "@
+    # ✅ Appliquer la politique pour les extensions
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox" -Name "ExtensionSettings" -Value $FirefoxExtensions -Force
     Write-Host "✅ Configuration des stratégies Firefox terminée avec Privacy Badger installé !"
+    
     # Créer les clés de registre pour Firefox si elles n'existent pas
     if (!(Test-Path -Path "HKLM:\SOFTWARE\Policies\Mozilla")) {
         New-Item -Path "HKLM:\SOFTWARE\Policies\" -Name "Mozilla" -Force
