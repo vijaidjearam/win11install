@@ -861,6 +861,7 @@ foreach($setting in $settings){
 }
 }
 function firefox-policy() {
+    # help reference : https://admx.help/
     New-Item -ItemType Directory -Force -Path $env:TEMP\Scripts\GPO\
     $WebClient = New-Object System.Net.WebClient
 
