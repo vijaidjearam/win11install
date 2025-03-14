@@ -924,10 +924,13 @@ function firefox-policy() {
 
     Write-Host "✅ Page d'accueil configurée avec succès !"
 
+    # Définir l'URL de la page de premier démarrage (First Run Page)
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox" -Name "OverrideFirstRunPage" -Value "https://www.univ-reims.fr/iut-troyes/" -Force
+
     # Supprimer le dossier temporaire
     Remove-Item -Path "$env:TEMP\Scripts\GPO\" -Recurse -Force
 
-    Write-Host "✅ Configuration des stratégies Firefox terminée avec Privacy Badger installé !"
+
 }
 
 function googlechrome-policy {
@@ -999,13 +1002,13 @@ function googlechrome-policy {
 	#>
 
     # Définir la page d'accueil de Chrome
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name "HomepageLocation" -Value "https://www.iut-troyes.univ-reims.fr/" -Force
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name "HomepageLocation" -Value "https://www.univ-reims.fr/iut-troyes/" -Force
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name "RestoreOnStartup" -Value 4 -Force
 
     if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Google\Chrome\RestoreOnStartupURLs)) {
         New-Item -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name RestoreOnStartupURLs
     }
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\RestoreOnStartupURLs -Name 1 -Value "https://www.iut-troyes.univ-reims.fr/" -Force
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\RestoreOnStartupURLs -Name 1 -Value "https://www.univ-reims.fr/iut-troyes/" -Force
 
     # Empêcher Chrome d'être défini comme navigateur par défaut
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name "DefaultBrowserSettingEnabled" -Value 0 -Force
