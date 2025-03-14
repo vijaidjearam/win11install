@@ -950,10 +950,12 @@ function googlechrome-policy {
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist -Name 1 -Value 'pkehgijcmpdhfbdbbnkijodmdjhbjlgp;https://clients2.google.com/service/update2/crx' -Force
 
     # Pinner l'extension Privacy Badger
-    if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Google\Chrome\PinnedExtensions)) {
-        New-Item -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name PinnedExtensions
-    }
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\PinnedExtensions -Name 1 -Value 'pkehgijcmpdhfbdbbnkijodmdjhbjlgp' -Force
+    # Pinning the extension fails, so skipping it for the moment. 
+    # workaround ,Pin the extension in a profile and copy it to default profile ("appdata\local\google")
+    # if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Google\Chrome\PinnedExtensions)) {
+    #     New-Item -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name PinnedExtensions
+    # }
+    # New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\PinnedExtensions -Name 1 -Value 'pkehgijcmpdhfbdbbnkijodmdjhbjlgp' -Force
 
     # Définir la page d'accueil de Chrome
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name "HomepageLocation" -Value "https://www.iut-troyes.univ-reims.fr/" -Force
