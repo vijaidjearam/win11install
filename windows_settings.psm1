@@ -952,10 +952,39 @@ function googlechrome-policy {
     # Pinner l'extension Privacy Badger
     # Pinning the extension fails, so skipping it for the moment. 
     # workaround ,Pin the extension in a profile and copy it to default profile ("appdata\local\google")
-    # if (!(Test-Path -Path HKLM:\SOFTWARE\Policies\Google\Chrome\PinnedExtensions)) {
-    #     New-Item -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name PinnedExtensions
-    # }
-    # New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\PinnedExtensions -Name 1 -Value 'pkehgijcmpdhfbdbbnkijodmdjhbjlgp' -Force
+	<# ----------------------
+	# Close Chrome before running this script!
+	
+	# Path to Chrome Preferences file
+	$chromePrefs = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Preferences"
+	
+	# Load Chrome preferences as JSON
+	$prefs = Get-Content $chromePrefs | ConvertFrom-Json -Depth 10
+	
+	# Ensure the 'extensions' section exists
+	if (-not $prefs.PSObject.Properties.Name -contains 'extensions') {
+	    $prefs | Add-Member -MemberType NoteProperty -Name 'extensions' -Value @{}
+	}
+	
+	# Ensure 'settings' section exists within extensions
+	if (-not $prefs.extensions.PSObject.Properties.Name -contains 'settings') {
+	    $prefs.extensions | Add-Member -MemberType NoteProperty -Name 'settings' -Value @{}
+	}
+	
+	# Pin Privacy Badger to the toolbar
+	$extensionID = 'pkehgijcmpdhfbdbbnkijodmdjhbjlgp'
+	
+	if (-not $prefs.extensions.settings.PSObject.Properties.Name -contains $extensionID) {
+	    $prefs.extensions.settings | Add-Member -MemberType NoteProperty -Name $extensionID -Value @{}
+	}
+	
+	$prefs.extensions.settings.$extensionID | Add-Member -MemberType NoteProperty -Name 'toolbar_pin' -Value 'force_pinned' -Force
+	
+	# Save the modified JSON back to the Preferences file
+	$prefs | ConvertTo-Json -Depth 20 | Set-Content $chromePrefs -Encoding UTF8
+	
+	Write-Host "Privacy Badger successfully pinned to toolbar!"
+	#>
 
     # Définir la page d'accueil de Chrome
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Google\Chrome\ -Name "HomepageLocation" -Value "https://www.iut-troyes.univ-reims.fr/" -Force
