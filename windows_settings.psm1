@@ -1155,4 +1155,10 @@ New-ItemProperty -Path $regPath -Name $regName -PropertyType $regType -Value $re
 Write-host "Registry key for DefaultFileAssociationsConfiguration was set successfully."
 }
 
-
+function Disable-NetworkSigning {
+# Disable "Microsoft network client: Digitally sign communications (always)"
+Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstation\Parameters" -Name "RequireSecuritySignature" -Value 0 -Type DWord
+# Disable "Microsoft network client: Digitally sign communications (if server agrees)"
+Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstation\Parameters" -Name "EnableSecuritySignature" -Value 0 -Type DWord
+Write-Output "Microsoft network client digital signing settings have been disabled."
+}
