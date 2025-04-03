@@ -20,33 +20,8 @@ write-host "Chocolatey Installed Successfully --------------Ok"
 write-host "adding chocolatey internal server address to host file --------------Ok"
 choco source add -n chocosia -s "http://choco.local.iut-troyes.univ-reims.fr/repository/chocolatey-group/" --priority=1 | Out-Null
 write-host "Internal chocolatey configured --------------Ok"
-#Enabling insecure guest logons for accessing network shares anonymously and Disable-NetworkSigning 
-try{
-Invoke-Expression AllowInsecureGuestAuth
-if (Test-Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\LanmanWorkstation)
-{
-Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\LanmanWorkstation -Name AllowInsecureGuestAuth -Value 1 -Force
-# Disable "Microsoft network client: Digitally sign communications (always)"
-Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstation\Parameters" -Name "RequireSecuritySignature" -Value 0 -Type DWord
-# Disable "Microsoft network client: Digitally sign communications (if server agrees)"
-Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstation\Parameters" -Name "EnableSecuritySignature" -Value 0 -Type DWord
-}
-else
-{
-New-Item -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows -Name LanmanWorkstation -Force
-New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\LanmanWorkstation -Name AllowInsecureGuestAuth -Value 1 -Force
-# Disable "Microsoft network client: Digitally sign communications (always)"
-Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstation\Parameters" -Name "RequireSecuritySignature" -Value 0 -Type DWord
-# Disable "Microsoft network client: Digitally sign communications (if server agrees)"
-Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstation\Parameters" -Name "EnableSecuritySignature" -Value 0 -Type DWord
-}
-write-host "AllowInsecureGuestAuth and Disable Network-signing-----OK" -ForegroundColor Green
-}
-catch{
-write-host  ""
-write-host  "AllowInsecureGuestAuth and Disable Network-signing -----Nok" -ForegroundColor Red
-}
-
+#Enabling insecure guest logons for accessing network shares anonymously and Disable-Digitally sign communications 
+Invoke-Expression AllowInsecureGuestAuthAndDisableDigitallySign
 New-Item -Path "HKCU:\" -Name osinstall_local
 $manufacturer = (Get-CimInstance -ClassName win32_computersystem | Select-Object Manufacturer).Manufacturer
 if ($manufacturer -like '*dell*')
