@@ -697,8 +697,24 @@ https://boxstarter.org
     Restart-Explorer
 }
 
-function AllowInsecureGuestAuth{
+function AllowInsecureGuestAuthAndDisableDigitallySign{
+if (Test-Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\LanmanWorkstation)
+	{
 	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "AllowInsecureGuestAuth" -Value 1
+ 	# Disable "Microsoft network client: Digitally sign communications (always)"
+	Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstation\Parameters" -Name "RequireSecuritySignature" -Value 0 -Type DWord
+	# Disable "Microsoft network client: Digitally sign communications (if server agrees)"
+	Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstation\Parameters" -Name "EnableSecuritySignature" -Value 0 -Type DWord
+ 	}
+else
+	{
+	New-Item -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows -Name LanmanWorkstation -Force
+	Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "AllowInsecureGuestAuth" -Value 1 -Type DWord
+	# Disable "Microsoft network client: Digitally sign communications (always)"
+	Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstation\Parameters" -Name "RequireSecuritySignature" -Value 0 -Type DWord
+	# Disable "Microsoft network client: Digitally sign communications (if server agrees)"
+	Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstation\Parameters" -Name "EnableSecuritySignature" -Value 0 -Type DWord
+	}
 }
 function power_config{
 	powercfg.exe -x -monitor-timeout-ac 30 # plugged in device
