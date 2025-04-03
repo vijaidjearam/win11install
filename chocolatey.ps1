@@ -9,6 +9,8 @@ $FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_chocolate
 Start-Transcript -path $FileName -NoClobber
 $repopath = Get-ItemPropertyValue -Path 'HKCU:\repopath' -Name path
 iex ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.psm1'))
+#Enabling insecure guest logons for accessing network shares anonymously and Disable-Digitally sign communications
+Invoke-Expression AllowInsecureGuestAuthAndDisableDigitallySign
 $apps = @()
 $PSCommandArgs = @()
 
