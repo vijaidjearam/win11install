@@ -195,6 +195,7 @@ Set-StrictMode -Version 'Latest';
 		<File path="C:\Windows\Setup\Scripts\chocolatey-apps.txt">
 # To exclude a software package please add &quot;#&quot; before the software name
 # To add a software with paramaters that has special characters like quotations, please make sure to use the xml escape using the following site: https://www.freeformatter.com/xml-escape.html
+vcredist140
 7zip.install
 dotnetfx
 ! adobereader --params &apos;&quot;/DesktopIcon /UpdateMode:4&quot;&apos;
