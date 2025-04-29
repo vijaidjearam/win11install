@@ -2,7 +2,7 @@
 function Install-DellCommandUpdate {
     try {
         Write-Host "Installing Dell Command Update..." -ForegroundColor Yellow
-        choco install -y dellcommandupdate 
+        choco install -y dellcommandupdate --ignore-checksums
         Write-Host "Dell Command Update installation initiated." -ForegroundColor Green
     } catch {
         Write-Host "Failed to install Dell Command Update: $_" -ForegroundColor Red
