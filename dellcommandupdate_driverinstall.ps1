@@ -37,14 +37,14 @@ if (-Not (Test-Path $dcuPath)) {
 }
 
 # Configure advanced driver restore
-# & $dcuPath /configure -advancedDriverRestore=enable
-# Write-Host "`nAdvanced Driver Restore Enabled" -ForegroundColor Green
+& $dcuPath /configure -advancedDriverRestore=enable
+Write-Host "`nAdvanced Driver Restore Enabled" -ForegroundColor Green
 
 # Run driver installation
 & $dcuPath /driverInstall
 
 # Check if the driver install went through successfully
-if ($LASTEXITCODE -in @(0, 1, 5, 500)) {
+if ($LASTEXITCODE -in @(0, 1, 2, 5, 500)) {
     Write-Host "`nStage: dellcommandupdate_driverinstall completed" -ForegroundColor Green
     Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -Value 'dellcommandupdate_applyupdates'
     Set-Runonce
