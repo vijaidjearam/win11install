@@ -37,8 +37,8 @@ if (-Not (Test-Path $dcuPath)) {
 }
 
 # Configure advanced driver restore
-& $dcuPath /configure -advancedDriverRestore=enable
-Write-Host "`nAdvanced Driver Restore Enabled" -ForegroundColor Green
+# & $dcuPath /configure -advancedDriverRestore=enable
+# Write-Host "`nAdvanced Driver Restore Enabled" -ForegroundColor Green
 
 # Run driver installation
 & $dcuPath /driverInstall
