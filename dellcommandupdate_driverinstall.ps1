@@ -44,6 +44,7 @@ Write-Host "`nAdvanced Driver Restore Enabled" -ForegroundColor Green
 & $dcuPath /driverInstall
 
 # Check if the driver install went through successfully
+# The exit codes 2 is where the advanceddriverrestore is not supported by the system in that case we need to move to the dellcommand update using /applyupdates.
 if ($LASTEXITCODE -in @(0, 1, 2, 5, 500)) {
     Write-Host "`nStage: dellcommandupdate_driverinstall completed" -ForegroundColor Green
     Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -Value 'dellcommandupdate_applyupdates'
