@@ -47,29 +47,29 @@ While ($i -lt $args.Length) {
 	$i++
 }
 
+
 # Call the desired tweak functions
 $tweaks | ForEach-Object { 
     try
     {
-        Remove-Item -Path HKCU:\osinstall_local
-        Remove-Item -Path HKCU:\repopath
         Invoke-Expression $_ 
         write-host $_ "---------------------OK" -ForegroundColor Green
-        #Stop-Transcript
-        Write-host "The Next step is going to clear Temp File and eventlogs, check the log file for any error message and then continue: "
-        Pause
-        iex DeleteTempFiles
-        iex clear-eventlogs
-        write-host "Stage: cleaning completed" -ForegroundColor Green
     }
     catch
-    {
+    {	
+		write-host  ""
+		write-host $_ "--------------Nok" -ForegroundColor Red
         write-host "Stage: cleaning Failed" -ForegroundColor Red
         Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value cleaning
-        $repopath = Get-ItemPropertyValue -Path 'HKCU:\osinstall_local' -Name repopath
-        $repo = $repopath+'header.ps1'
-        Set-Runonce -command "%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -executionpolicy bypass ; iex ((New-Object System.Net.WebClient).DownloadString($repo))"
-        #Stop-Transcript
+        Set-Runonce
         Pause
+		Exit
     }
 }
+write-host "Stage: cleaning completed" -ForegroundColor Green
+Write-host "The Next step is going to clear Temp File and eventlogs, check the log file for any error message and then continue: "
+Pause
+Remove-Item -Path HKCU:\osinstall_local
+Remove-Item -Path HKCU:\repopath
+iex DeleteTempFiles
+iex clear-eventlogs
