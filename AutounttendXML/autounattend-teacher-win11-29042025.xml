@@ -233,11 +233,11 @@ office365
 ! projectpro2019
 ! visiopro2019
 fusion-inventory
-laps-urca
+! laps-urca
 ! insight-student-urca
 ! microsoft-teams.install --params &quot;&apos;/AllUsers /NoAutoStart&apos;&quot;
 velociraptor
-! zoom
+zoom
 defprof-urca
 ! pdfxchangeeditor
 ! xmind

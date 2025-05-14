@@ -1178,3 +1178,72 @@ Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstatio
 Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Services\LanManWorkstation\Parameters" -Name "EnableSecuritySignature" -Value 0 -Type DWord
 Write-Output "Microsoft network client digital signing settings have been disabled."
 }
+
+
+# Delete Temp Files
+Function DeleteTempFiles {
+    Write-Host "Cleaning up temporary files and setup scripts..."
+    # The folder C:\8336500659725115574 is created during dellcommandupdate /applyupdates
+    $tempfolders = @("C:\Windows\Temp\*", "C:\Windows\Prefetch\*", "C:\Documents and Settings\*\Local Settings\temp\*", "C:\Users\*\Appdata\Local\Temp\*","C:\Windows\Setup\Scripts\*","C:\8336500659725115574","C:\AMD","C:\Intel")
+    Remove-Item $tempfolders -force -recurse 2>&1 | Out-Null
+}
+
+# Clean WinSXS folder (WARNING: this takes a while!)
+Function CleanWinSXS {
+    Write-Host "Cleaning WinSXS folder, this may take a while, please wait..."
+    Dism.exe /online /Cleanup-Image /StartComponentCleanup
+}
+function dontdisplaylastusername-on-logon{
+New-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name dontdisplaylastusername -Value 1 -Force
+}
+# Turn On or Off Use sign-in info to auto finish setting up device after update or restart in Windows 10
+function disableautosignin-info{
+New-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name DisableAutomaticRestartSignOn -Value 1 -Force
+}
+
+function disable-autologon{
+Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoAdminLogon -Value 0 -Force
+Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name DefaultDomainName -Force
+Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name DefaultUserName -Force
+Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoLogonCount -Value 0 -Force
+Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoLogonSID -Value 0 -Force
+#Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name DefaultPassword -Force
+}
+
+
+function clear-eventlogs{
+Write-host "Cleaning Event Log" 
+Get-EventLog -LogName * | ForEach { Clear-EventLog $_.Log }
+Write-host "Completed Cleaning Event Log" 
+}
+function Remove-WindowsOld {
+    $folderPath = "C:\Windows.old"
+    
+    if (Test-Path -Path $folderPath) {
+        Write-Host "Folder 'Windows.old' found. Removing..." -ForegroundColor Yellow
+        try {
+            Remove-Item -Path $folderPath -Recurse -Force
+            Write-Host "'Windows.old' has been successfully removed." -ForegroundColor Green
+        } catch {
+            Write-Host "An error occurred while removing 'Windows.old': $_" -ForegroundColor Red
+        }
+    } else {
+        Write-Host "'Windows.old' folder does not exist." -ForegroundColor Red
+    }
+}
+function Uninstall-DellCommandUpdate {
+    # Check if DellCommandUpdate is installed via Chocolatey
+    $package = choco list | Select-String -Pattern "DellCommandUpdate"
+
+    if ($package) {
+        Write-Host "'DellCommandUpdate' found, uninstalling..." -ForegroundColor Yellow
+        try {
+            choco uninstall DellCommandUpdate -y
+            Write-Host "'DellCommandUpdate' has been successfully uninstalled." -ForegroundColor Green
+        } catch {
+            Write-Host "An error occurred while uninstalling 'DellCommandUpdate': $_" -ForegroundColor Red
+        }
+    } else {
+        Write-Host "'DellCommandUpdate' is not installed via Chocolatey." -ForegroundColor Red
+    }
+}

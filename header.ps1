@@ -147,8 +147,11 @@ Switch ($stage)
     'cleaning'
     {
         write-host "Entering Stage: $stage" -ForegroundColor Green
-        $FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
-        Start-Transcript -path $FileName -NoClobber
-        iex ((New-Object System.Net.WebClient).DownloadString($repopath+'cleaning.ps1'))
+        #$FileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_transcript.txt"
+        #Start-Transcript -path $FileName -NoClobber
+        #iex ((New-Object System.Net.WebClient).DownloadString($repopath+'cleaning.ps1'))
+        $LogFileName = $env:TEMP+"\"+(Get-Date).tostring("dd-MM-yyyy-hh-mm-ss")+"_"+ $stage+"_log.log"
+        ((New-Object System.Net.WebClient).DownloadString($repopath+'windows_settings.ps1'))| Out-File $env:TEMP\cleaning.ps1
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\cleaning.ps1 -include $env:TEMP\windows_settings.psm1 -preset C:\Windows\Setup\Scripts\cleaning_settings.txt -log $LogFileName
     }
 }

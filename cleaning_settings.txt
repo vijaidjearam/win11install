@@ -1,0 +1,12 @@
+### To exclude a settings place "!" before the settings
+### For Comments use "#"
+### Require administrator privileges ###
+RequireAdmin
+### Cleaning settings ###
+CleanWinSXS
+Uninstall-DellCommandUpdate
+disableautosignin-info
+disable-autologon
+dontdisplaylastusername-on-logon
+#remove windows.old folder
+Remove-WindowsOld
