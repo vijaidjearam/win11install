@@ -20,6 +20,11 @@ elseif($LASTEXITCODE -eq 43){
 write-host "There was an error setting the option: $item " -ForegroundColor Yellow
 
 }
+elseif($LASTEXITCODE -eq 62){
+
+write-host "Secure Boot cannot be disabled via Dell command configure " -ForegroundColor Yellow
+
+}
 elseif($LASTEXITCODE -eq 72){
 
 write-host "TpmActivation cannot be modified when TPM is OFF" -ForegroundColor Yellow
