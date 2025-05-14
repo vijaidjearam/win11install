@@ -638,7 +638,7 @@ CleanWinSXS
 Uninstall-DellCommandUpdate
 disableautosignin-info
 disable-autologon
-dontdisplaylastusername-on-logon
+! dontdisplaylastusername-on-logon
 #remove windows.old folder
 Remove-WindowsOld
 		</File>
