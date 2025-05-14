@@ -67,7 +67,7 @@ write-host $_ "---------------------OK" -ForegroundColor Green
 catch{
 write-host  ""
 write-host $_ "--------------Nok" -ForegroundColor Red
-write-host "Stage: windows_settings Failed" -ForegroundColor Red
+write-host "Stage: Cleaning Failed" -ForegroundColor Red
 Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'windows_debloat'
 Set-Runonce
 #Stop-Transcript
@@ -75,7 +75,7 @@ Pause
 Exit
 }
 }
-write-host "Stage: windows_settings completed" -ForegroundColor Green
+write-host "Stage: Cleaning completed" -ForegroundColor Green
 Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'cleaning'
 Set-Runonce
 #Stop-Transcript
