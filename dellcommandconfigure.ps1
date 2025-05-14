@@ -37,7 +37,7 @@ $biospassword = Read-Host -Prompt 'Enter bios Password to clear it in bios'
 write-host "setting $item was successfull" -ForegroundColor Green
 }
 else{
-write-host "There was an error setting the option: $item " -ForegroundColor Red
+write-host "There was an error setting the option: $item  LastExitCode: $LASTEXITCODE" -ForegroundColor Red
 Set-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'dellcommandconfigure'
 Set-Runonce 
 Stop-Transcript
