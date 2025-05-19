@@ -360,6 +360,8 @@ DisableMicrosoftEdgeFirstRunWizard
 ChangeDefaultGoogleChromeSearchProviderandskipbrowsersignin
 # Set-default file associations
 set-file_associations
+# Disable Offline Files - Sync Center
+Disable-SyncCenter
 		</File>
 		<File path="C:\Windows\Setup\Scripts\debloat_preset.txt">
 ##########
