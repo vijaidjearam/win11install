@@ -1247,3 +1247,28 @@ function Uninstall-DellCommandUpdate {
         Write-Host "'DellCommandUpdate' is not installed via Chocolatey." -ForegroundColor Red
     }
 }
+function Disable-SyncCenter {
+    Write-Host "Disabling Sync Center (Offline Files)..." -ForegroundColor Yellow
+
+    try {
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\CSC" -Name "Start" -Value 4 -ErrorAction Stop
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\CscService" -Name "Start" -Value 4 -ErrorAction Stop
+        Write-Host "Sync Center has been disabled. A system restart is required." -ForegroundColor Green
+    }
+    catch {
+        Write-Error "Failed to disable Sync Center: $_"
+    }
+}
+
+function Enable-SyncCenter {
+    Write-Host "Enabling Sync Center (Offline Files)..." -ForegroundColor Cyan
+
+    try {
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\CSC" -Name "Start" -Value 1 -ErrorAction Stop  # Boot start
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\CscService" -Name "Start" -Value 2 -ErrorAction Stop  # Automatic
+        Write-Host "Sync Center has been enabled. A system restart is required." -ForegroundColor Green
+    }
+    catch {
+        Write-Error "Failed to enable Sync Center: $_"
+    }
+}
