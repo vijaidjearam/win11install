@@ -232,7 +232,7 @@ office365
 ! office2019
 ! projectpro2019
 ! visiopro2019
-fusion-inventory
+glpi-agent-iut3
 ! laps-urca
 ! insight-student-urca
 ! microsoft-teams.install --params &quot;&apos;/AllUsers /NoAutoStart&apos;&quot;
