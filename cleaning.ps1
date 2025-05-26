@@ -73,3 +73,4 @@ Remove-Item -Path HKCU:\osinstall_local
 Remove-Item -Path HKCU:\repopath
 iex DeleteTempFiles
 iex clear-eventlogs
+iex Create-ScheduledShutdown
