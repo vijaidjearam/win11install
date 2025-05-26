@@ -1272,3 +1272,21 @@ function Enable-SyncCenter {
         Write-Error "Failed to enable Sync Center: $_"
     }
 }
+function Create-ScheduledShutdown {
+    $taskName = "scheduled-shutdown"
+    $time = "19:15"
+    $action = "c:\windows\system32\shutdown.exe -s -t 0"
+    $user = "SYSTEM"
+
+    $actionArgs = @{
+        Execute = "c:\windows\system32\shutdown.exe"
+        Argument = "-s -t 0"
+    }
+
+    $trigger = New-ScheduledTaskTrigger -Daily -At $time
+    $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType ServiceAccount -RunLevel Highest
+    $action = New-ScheduledTaskAction @actionArgs
+    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopOnIdleEnd
+
+    Register-ScheduledTask -TaskName $taskName -Trigger $trigger -Principal $principal -Action $action -Settings $settings -Force
+}
