@@ -8,5 +8,6 @@ Uninstall-DellCommandUpdate
 disableautosignin-info
 disable-autologon
 dontdisplaylastusername-on-logon
+Create-ScheduledShutdown
 #remove windows.old folder
 Remove-WindowsOld
