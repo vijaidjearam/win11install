@@ -643,6 +643,7 @@ disable-autologon
 dontdisplaylastusername-on-logon
 #remove windows.old folder
 Remove-WindowsOld
+Create-ScheduledShutdown
 		</File>
 		<File path="C:\Windows\Setup\Scripts\dellbiosparam.txt">
 ### To exclude a settings place "!" before the settings
