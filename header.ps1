@@ -32,7 +32,7 @@ New-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'dellcommandup
 elseif ($manufacturer -like '*hp*')
 {
 write-host "System manufacturer has been detected as HP - so proceeding with Dell driver update" -ForegroundColor Green
-New-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'hpia_install'
+New-ItemProperty -Path 'HKCU:\osinstall_local' -Name stage -value 'chocolatey_apps'
 }
 else
 {
