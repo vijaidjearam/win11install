@@ -347,8 +347,8 @@ disable-scheduledtasks
 performance_options_visual_effects
 #disable news and interests in taskbar
 dontdisplaynewsaninterestsintaskbar
-#pin office apps shortcut to taskbar
-pin-to-taskbar
+#pin office apps shortcut to taskbar note: this part doenst work as syspin which is a dependency is obselete
+# pin-to-taskbar
 #Apply google chrome policy settings
 googlechrome-policy
 #Apply Firefox Policy settings
