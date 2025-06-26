@@ -837,9 +837,6 @@ syspin "C:\Program Files\Microsoft Office\root\Office16\excel.exe" c:5386
 syspin "C:\Program Files\Microsoft Office\root\Office16\powerpnt.exe" c:5386
 syspin "C:\Program Files\Google\Chrome\Application\chrome.exe" c:5386
 }
-function dontdisplaylastusername-on-logon{
-New-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name dontdisplaylastusername -Value 1 -Force
-}
 function dontdisplaynewsaninterestsintaskbar {
 # Define the registry path and key
 $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds"
