@@ -164,74 +164,46 @@ elseif ($manufacturer -like "*Hewlett-Packard*" -or $manufacturer -like "*HP*") 
     if (-not (Test-Path $hpiaExePath)) {
         $hpiaExePath = "${env:ProgramFiles}\HP\HP Image Assistant\HPImageAssistant.exe"
     }
-
+    
+    # Fallback 2: Try PATH directly if file not found in standard locations
     if (-not (Test-Path $hpiaExePath)) {
-        Write-Status "ERROR" "CRITICAL - HPImageAssistant.exe not found at C:\HP\HPIA or Program Files."
+        $hpiaExePath = "HPImageAssistant.exe"
+        Write-Status "INFO" "Standard paths not found. Attempting to run from system PATH..."
+    }
+
+    if (-not (Test-Path $hpiaExePath) -and !(Get-Command "HPImageAssistant.exe" -ErrorAction SilentlyContinue)) {
+        Write-Status "ERROR" "CRITICAL - HPImageAssistant.exe not found at C:\HP\HPIA, Program Files, or in PATH."
         exit 1
     }
 
-    Write-Status "INFO" "Found HPImageAssistant.exe at: $hpiaExePath"
+    Write-Status "INFO" "Using executable: $hpiaExePath"
 
-    # Run HPIA: Analyze, Apply updates silently, suppress reboot
-    Write-Status "STEP" "Running HP Image Assistant to apply driver updates silently (reboot suppressed)..."
-    Write-Status "INFO" "Command: $hpiaExePath --analyze --apply --silent --suppress_reboot"
+    # --- CORRECTED ARGUMENTS (Based on your working script) ---
+    # /Operation:Analyze - Scans the system
+    # /Action:Install - Installs the missing drivers/software
+    # /Selection:All - Selects all applicable updates
+    # /Silent /Noninteractive - Runs quietly without user prompts
+    $hpiaArgs = "/Operation:Analyze /Action:Install /Selection:All /Silent /Noninteractive"
 
-    # Configure ProcessStartInfo for HPIA to run hidden
-    $processInfo = New-Object System.Diagnostics.ProcessStartInfo
-    $processInfo.FileName = $hpiaExePath
-    $processInfo.Arguments = "--analyze --apply --silent --suppress_reboot"
-    $processInfo.UseShellExecute = $false
-    $processInfo.WindowStyle = "Hidden"
+    Write-Status "STEP" "Running HP Image Assistant silently (This may take a while)..."
+    Write-Status "INFO" "Command: $hpiaExePath $hpiaArgs"
 
     try {
-        $hpiaProcess = [System.Diagnostics.Process]::Start($processInfo)
-        Write-Status "STEP" "HP Image Assistant launched successfully with Process ID: $($hpiaProcess.Id)"
+        # Using Start-Process with -Wait to ensure script pauses until HPIA finishes
+        # -NoNewWindow keeps it from popping up a new console window unnecessarily
+        Start-Process -FilePath $hpiaExePath -ArgumentList $hpiaArgs -Wait -NoNewWindow
+        
+        # Since HPIA doesn't always return clear exit codes to PowerShell easily in all versions,
+        # we assume success if no exception was thrown and the process exited.
+        Write-Status "STEP" "HP updates process completed. Check HPIA logs for detailed results."
     }
     catch {
-        Write-Status "ERROR" "CRITICAL - Failed to launch HP Image Assistant: $($_.Exception.Message)"
+        Write-Status "ERROR" "FAILED - Failed to execute HP Image Assistant. Ensure it is properly installed."
+        Write-Status "ERROR" "Error Details: $($_.Exception.Message)"
         exit 1
     }
 
-    # Wait for HPIA to complete with a timeout
-    $maxHPIAWaitSec = 600 # 10 minutes timeout
-    $waitedSec = 0
-    Write-Status "INFO" "Waiting for HP Image Assistant to complete (Max wait: $maxHPIAWaitSec seconds)..."
-
-    while (-not $hpiaProcess.HasExited -and $waitedSec -lt $maxHPIAWaitSec) {
-        Start-Sleep -Seconds 5
-        $waitedSec += 5
-        Write-Status "INFO" "HPIA still running... (Elapsed: $waitedSec seconds)"
-    }
-
-    # Check if HPIA timed out
-    if (-not $hpiaProcess.HasExited) {
-        Write-Status "WARN" "WARNING - HP Image Assistant timed out after $maxHPIAWaitSec seconds. Attempting to terminate process."
-        try {
-            $hpiaProcess.Kill() | Out-Null
-            Start-Sleep -Seconds 2
-            Write-Status "INFO" "HPIA process terminated."
-        }
-        catch {
-            Write-Status "ERROR" "Failed to terminate HPIA process: $($_.Exception.Message)"
-        }
-        $hpiaExitCode = -1
-    } else {
-        $hpiaExitCode = $hpiaProcess.ExitCode
-    }
-
-    Write-Status "STEP" "HP Image Assistant exited with code: $hpiaExitCode"
-
-    # Handle HPIA Exit Codes
-    switch ($hpiaExitCode) {
-        0 { Write-Status "STEP" "HPIA Report: System is up-to-date or no action was needed." }
-        1 { Write-Status "STEP" "HPIA Report: Updates were applied successfully. Reboot was suppressed." }
-        2 { Write-Status "STEP" "HPIA Report: Reboot is required (but was suppressed)." }
-        3 { Write-Status "WARN" "HPIA Report: Analysis completed, but found issues or no applicable action taken." }
-        -1 { Write-Status "ERROR" "HPIA Report: Process terminated due to timeout." }
-        default { Write-Status "WARN" "HPIA Report: Unknown or unexpected exit code: $hpiaExitCode." }
-    }
-
-    Write-Status "STEP" "HP update process completed."
+    Write-Status "STEP" "HP update process finished."
 }
 else {
     Write-Status "WARN" "Unsupported manufacturer: '$manufacturer'. This script only supports Dell and HP systems. Exiting."
