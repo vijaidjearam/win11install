@@ -5,7 +5,6 @@ Write-Host "=== STARTING DRIVER UPDATE SCRIPT (PS$($PSVersionTable.PSVersion.Maj
 Write-Host "User: $env:USERNAME | PID: $PID" -ForegroundColor Cyan
 
 # --- Helper Function: Write-Host with Level-Based Colors ---
-# This function centralizes output formatting for consistency and readability.
 function Write-Status {
     param([string]$Level, [string]$Message)
     $timestamp = Get-Date -Format "HH:mm:ss"
@@ -13,8 +12,8 @@ function Write-Status {
         "ERROR" { "Red" }
         "WARN"  { "Yellow" }
         "INFO"  { "Cyan" }
-        "STEP"  { "Magenta" } # Used for major steps/successes
-        default { "White" }   # Default for anything else
+        "STEP"  { "Magenta" }
+        default { "White" }
     }
     Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
 }
@@ -23,20 +22,19 @@ function Write-Status {
 Write-Status "STEP" "Checking internet connectivity..."
 $connected = $false
 $attempts = 0
-$maxRetries = 15 # Maximum attempts to check for internet
-$retryDelaySec = 10 # Delay between retries in seconds
+$maxRetries = 15
+$retryDelaySec = 10
 
 while ($attempts -lt $maxRetries) {
     $attempts++
     Write-Status "INFO" "Attempt $attempts of $maxRetries to connect to internet..."
 
     try {
-        # Use a simple HEAD request to minimize data transfer
         $response = Invoke-WebRequest -Uri "https://www.google.com" -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
         if ($response.StatusCode -eq 200) {
             Write-Status "STEP" "SUCCESS - Internet connection confirmed."
             $connected = $true
-            break # Exit loop if connected
+            break
         }
     }
     catch {
@@ -49,7 +47,7 @@ while ($attempts -lt $maxRetries) {
 
 if (-not $connected) {
     Write-Status "ERROR" "CRITICAL - No internet after $maxRetries attempts. Exiting script."
-    exit 1 # Exit with error code
+    exit 1
 }
 
 # --- STEP 2: Detect System Manufacturer ---
@@ -67,18 +65,17 @@ catch {
 Write-Status "STEP" "Ensuring Chocolatey (package manager) is installed..."
 if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
     Write-Status "INFO" "Chocolatey not found. Attempting to install Chocolatey now..."
-    # Set execution policy and security protocol for Chocolatey installation
     Set-ExecutionPolicy Bypass -Scope Process -Force
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 3072
 
     try {
         $installScript = Invoke-RestMethod 'https://community.chocolatey.org/install.ps1'
-        & [scriptblock]::Create($installScript) # Execute the downloaded script
+        & [scriptblock]::Create($installScript)
         Write-Status "STEP" "SUCCESS - Chocolatey installed successfully."
     }
     catch {
         Write-Status "ERROR" "CRITICAL - Chocolatey installation failed: $($_.Exception.Message)"
-        exit 1 # Exit with error code
+        exit 1
     }
 }
 else {
@@ -91,10 +88,8 @@ if ($manufacturer -like "*Dell*") {
 
     # Install Dell Command | Update
     Write-Status "STEP" "Installing Dell Command Update via Chocolatey..."
-    # Using Start-Process to run choco and wait for its completion
     Start-Process -FilePath "choco" -ArgumentList "install -y dellcommandupdate" -Wait -NoNewWindow
     $chocoExitCode = $LASTEXITCODE
-    # Chocolatey exit code 0 is success, 3010 means success but requires reboot (which we suppress)
     if ($chocoExitCode -ne 0 -and $chocoExitCode -ne 3010) {
         Write-Status "ERROR" "FAILED - Chocolatey install of dellcommandupdate failed with exit code: $chocoExitCode"
         exit $chocoExitCode
@@ -133,7 +128,6 @@ if ($manufacturer -like "*Dell*") {
         4 { Write-Status "ERROR" "DCU Report: Error initializing update process." }
         5 { Write-Status "ERROR" "DCU Report: System not supported by Dell Command Update." }
         default {
-            # Catch any other unexpected non-zero exit codes
             if ($dcuCliExitCode -gt 5) {
                 Write-Status "WARN" "DCU Report: Unexpected exit code: $dcuCliExitCode. Review Dell Command Update logs for details."
             } else {
@@ -142,10 +136,7 @@ if ($manufacturer -like "*Dell*") {
         }
     }
 
-    # Define what constitutes a critical failure for DCU
-    # In this context, exit code 1 (updates applied, or skipped due to BIOS password) is acceptable.
-    # We only hard-fail for more severe errors (e.g., initialization issues, unsupported system, etc.)
-    if ($dcuCliExitCode -gt 10) { # Arbitrary threshold for critical errors not covered by specific codes
+    if ($dcuCliExitCode -gt 10) {
         Write-Status "ERROR" "CRITICAL - Dell update process failed with severe exit code: $dcuCliExitCode. Exiting."
         exit $dcuCliExitCode
     } else {
@@ -165,23 +156,32 @@ elseif ($manufacturer -like "*Hewlett-Packard*" -or $manufacturer -like "*HP*") 
     }
     Write-Status "STEP" "HP Image Assistant installed successfully."
 
-    # Define path to HPIA.exe
-    $hpiaExePath = "${env:ProgramFiles}\HP\HP Image Assistant\HPIA.exe"
+    # --- CORRECTED PATH AND EXECUTABLE NAME ---
+    # Primary location: C:\HP\HPIA\HPImageAssistant.exe
+    $hpiaExePath = "C:\HP\HPIA\HPImageAssistant.exe"
+    
+    # Fallback location: Program Files (in case installer puts it there)
     if (-not (Test-Path $hpiaExePath)) {
-        Write-Status "ERROR" "CRITICAL - HP Image Assistant executable (HPIA.exe) not found at expected path: $hpiaExePath"
+        $hpiaExePath = "${env:ProgramFiles}\HP\HP Image Assistant\HPImageAssistant.exe"
+    }
+
+    if (-not (Test-Path $hpiaExePath)) {
+        Write-Status "ERROR" "CRITICAL - HPImageAssistant.exe not found at C:\HP\HPIA or Program Files."
         exit 1
     }
+
+    Write-Status "INFO" "Found HPImageAssistant.exe at: $hpiaExePath"
 
     # Run HPIA: Analyze, Apply updates silently, suppress reboot
     Write-Status "STEP" "Running HP Image Assistant to apply driver updates silently (reboot suppressed)..."
     Write-Status "INFO" "Command: $hpiaExePath --analyze --apply --silent --suppress_reboot"
 
-    # Configure ProcessStartInfo for HPIA to run hidden and capture output (if needed)
+    # Configure ProcessStartInfo for HPIA to run hidden
     $processInfo = New-Object System.Diagnostics.ProcessStartInfo
     $processInfo.FileName = $hpiaExePath
     $processInfo.Arguments = "--analyze --apply --silent --suppress_reboot"
-    $processInfo.UseShellExecute = $false # Essential for Hidden window style
-    $processInfo.WindowStyle = "Hidden"   # Hide the HPIA window
+    $processInfo.UseShellExecute = $false
+    $processInfo.WindowStyle = "Hidden"
 
     try {
         $hpiaProcess = [System.Diagnostics.Process]::Start($processInfo)
@@ -193,7 +193,7 @@ elseif ($manufacturer -like "*Hewlett-Packard*" -or $manufacturer -like "*HP*") 
     }
 
     # Wait for HPIA to complete with a timeout
-    $maxHPIAWaitSec = 600 # 10 minutes timeout for HPIA
+    $maxHPIAWaitSec = 600 # 10 minutes timeout
     $waitedSec = 0
     Write-Status "INFO" "Waiting for HP Image Assistant to complete (Max wait: $maxHPIAWaitSec seconds)..."
 
@@ -207,27 +207,27 @@ elseif ($manufacturer -like "*Hewlett-Packard*" -or $manufacturer -like "*HP*") 
     if (-not $hpiaProcess.HasExited) {
         Write-Status "WARN" "WARNING - HP Image Assistant timed out after $maxHPIAWaitSec seconds. Attempting to terminate process."
         try {
-            $hpiaProcess.Kill() | Out-Null # Force terminate the process
-            Start-Sleep -Seconds 2 # Give it a moment to terminate
+            $hpiaProcess.Kill() | Out-Null
+            Start-Sleep -Seconds 2
             Write-Status "INFO" "HPIA process terminated."
         }
         catch {
             Write-Status "ERROR" "Failed to terminate HPIA process: $($_.Exception.Message)"
         }
-        $hpiaExitCode = -1 # Indicate a forced termination
+        $hpiaExitCode = -1
     } else {
         $hpiaExitCode = $hpiaProcess.ExitCode
     }
 
     Write-Status "STEP" "HP Image Assistant exited with code: $hpiaExitCode"
 
-    # Handle HPIA Exit Codes (simplified common ones)
+    # Handle HPIA Exit Codes
     switch ($hpiaExitCode) {
         0 { Write-Status "STEP" "HPIA Report: System is up-to-date or no action was needed." }
         1 { Write-Status "STEP" "HPIA Report: Updates were applied successfully. Reboot was suppressed." }
         2 { Write-Status "STEP" "HPIA Report: Reboot is required (but was suppressed)." }
         3 { Write-Status "WARN" "HPIA Report: Analysis completed, but found issues or no applicable action taken." }
-        -1 { Write-Status "ERROR" "HPIA Report: Process terminated due to timeout." } # Custom code for timeout
+        -1 { Write-Status "ERROR" "HPIA Report: Process terminated due to timeout." }
         default { Write-Status "WARN" "HPIA Report: Unknown or unexpected exit code: $hpiaExitCode." }
     }
 
@@ -235,7 +235,7 @@ elseif ($manufacturer -like "*Hewlett-Packard*" -or $manufacturer -like "*HP*") 
 }
 else {
     Write-Status "WARN" "Unsupported manufacturer: '$manufacturer'. This script only supports Dell and HP systems. Exiting."
-    exit 0 # Exit gracefully if unsupported
+    exit 0
 }
 
 # --- Final Message ---
