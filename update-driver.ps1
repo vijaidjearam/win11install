@@ -115,8 +115,8 @@ if ($manufacturer -like "*Dell*") {
 
     # Apply Updates (drivers, firmware, BIOS) and suppress reboot
     Write-Status "STEP" "Applying available updates using Dell Command Update (reboot suppressed)..."
-    Write-Status "INFO" "Command: $dcuCliPath /applyupdates -reboot=never"
-    & $dcuCliPath /applyupdates -reboot=never
+    Write-Status "INFO" "Command: $dcuCliPath /applyupdates -reboot=disable"
+    & $dcuCliPath /applyupdates -reboot=disable
     $dcuCliExitCode = $LASTEXITCODE
 
     # Handle DCU CLI Exit Codes
