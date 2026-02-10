@@ -97,51 +97,173 @@ if ($manufacturer -like "*Dell*") {
     Write-Status "STEP" "Dell Command Update installed successfully."
 
     # Define path to dcu-cli.exe
-    $dcuCliPath = "${env:ProgramFiles(x86)}\Dell\CommandUpdate\dcu-cli.exe"
-    if (-not (Test-Path $dcuCliPath)) {
+    $DCUCliPath = "${env:ProgramFiles(x86)}\Dell\CommandUpdate\dcu-cli.exe"
+    if (-not (Test-Path $DCUCliPath)) {
         Write-Status "ERROR" "CRITICAL - Dell Command Update CLI (dcu-cli.exe) not found at expected path: $dcuCliPath"
         exit 1
     }
 
     # Enable Advanced Driver Restore
     Write-Status "STEP" "Enabling Advanced Driver Restore in Dell Command Update..."
-    & $dcuCliPath /configure -advanceddriverrestore=enable
+    & $DCUCliPath /configure -advanceddriverrestore=enable
     $dcuCliExitCode = $LASTEXITCODE
     if ($dcuCliExitCode -ne 0) {
         Write-Status "WARN" "WARNING - Failed to enable Advanced Driver Restore (Exit Code: $dcuCliExitCode). Continuing anyway."
     } else {
         Write-Status "STEP" "Advanced Driver Restore enabled."
     }
+    # =============================================================================
+    # DELL DRIVER INSTALL LOOP — with /driverinstall -> /applyupdates fallback
+    # =============================================================================
 
-    # Apply Updates (drivers, firmware, BIOS) and suppress reboot
-    Write-Status "STEP" "Applying available updates using Dell Command Update Makesure that password is not set in the BIOS"
-    Write-Status "INFO" "Command: $dcuCliPath /applyupdates"
-    & $dcuCliPath /applyupdates
-    $dcuCliExitCode = $LASTEXITCODE
+    if (Test-Path $DCUCliPath) {
 
-    # Handle DCU CLI Exit Codes
-    switch ($dcuCliExitCode) {
-        0 { Write-Status "STEP" "DCU Report: No applicable updates were found." }
-        1 { Write-Status "STEP" "DCU Report: Updates applied successfully. NOTE: BIOS updates might be skipped if a BIOS password is set. Reboot was suppressed." }
-        2 { Write-Status "STEP" "DCU Report: Reboot is required to complete installation, but was suppressed." }
-        3 { Write-Status "WARN" "DCU Report: Updates available but could not be applied (e.g., missing dependencies or conflicts)." }
-        4 { Write-Status "ERROR" "DCU Report: Error initializing update process." }
-        5 { Write-Status "ERROR" "DCU Report: System not supported by Dell Command Update." }
-        default {
-            if ($dcuCliExitCode -gt 5) {
-                Write-Status "WARN" "DCU Report: Unexpected exit code: $dcuCliExitCode. Review Dell Command Update logs for details."
-            } else {
-                Write-Status "WARN" "DCU Report: Unknown specific exit code: $dcuCliExitCode."
+        Write-Host "=============================================" -ForegroundColor Cyan
+        Write-Host " Dell Command Update — Driver Installation"    -ForegroundColor Cyan
+        Write-Host "=============================================" -ForegroundColor Cyan
+
+        # ------------------------------------------------------------------
+        # STEP 1: Attempt /driverinstall (base drivers only)
+        # ------------------------------------------------------------------
+        Write-Host "`n[STEP 1] Running DCU /driverinstall ..." -ForegroundColor Cyan
+
+        try {
+            $driverInstallProc = Start-Process -FilePath $DCUCliPath `
+                -ArgumentList "/driverinstall -silent -reboot=disable" `
+                -Wait -PassThru -NoNewWindow -ErrorAction Stop
+
+            $diExitCode = $driverInstallProc.ExitCode
+            Write-Host "[INFO] /driverinstall exit code: $diExitCode"
+
+            <#  Dell Command Update CLI Exit Codes:
+                    0  = Completed successfully, no reboot required
+                    1  = Reboot required (updates applied successfully)
+                    2  = Fatal error during update
+                    3  = Error occurred during update
+                    4  = Invalid XML / CLI input error
+                    5  = No updates available
+                500  = No updates available (some DCU versions)
+            #>
+
+            # Define success codes
+            $successCodes = @(0, 1, 5, 500)
+
+            if ($diExitCode -in $successCodes) {
+                # ==========================================================
+                # SUCCESS PATH: schedule /applyupdates at next logon + reboot
+                # ==========================================================
+                Write-Host "[SUCCESS] /driverinstall completed successfully (exit code: $diExitCode)." -ForegroundColor Green
+
+                # --- Create a helper script for RunOnce ---
+                # This ensures /applyupdates runs elevated with logging
+$applyUpdatesScript = @'
+Start-Transcript -Path "C:\Temp\dell-applyupdates.log" -Append
+Write-Host "[RunOnce] Starting Dell Command Update /applyupdates ..."
+try {
+    $proc = Start-Process -FilePath "##DCUPATH##" `
+        -ArgumentList "/applyupdates -silent -reboot=enable" `
+        -Wait -PassThru -NoNewWindow
+    Write-Host "[RunOnce] /applyupdates exit code: $($proc.ExitCode)"
+} catch {
+    Write-Host "[RunOnce] ERROR: $_"
+}
+Stop-Transcript
+'@
+
+                # Now inject the actual DCU path into the script
+                $applyUpdatesScript = $applyUpdatesScript.Replace("##DCUPATH##", $DCUCliPath)
+                $scriptPath = "C:\Temp\dell-runonce-applyupdates.ps1"
+
+                # Ensure C:\Temp exists
+                if (-not (Test-Path "C:\Temp")) {
+                    New-Item -Path "C:\Temp" -ItemType Directory -Force | Out-Null
+                }
+
+                # Write the helper script to disk
+                $applyUpdatesScript | Out-File -FilePath $scriptPath -Encoding UTF8 -Force
+                Write-Host "[INFO] Helper script written to: $scriptPath"
+
+                # --- Register RunOnce entry ---
+                # Using '*' prefix on the value name ensures it runs even if
+                # the previous run didn't complete (safe-mode resilient).
+                $runOnceKey  = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
+                $runOnceCmd  = "powershell.exe -ExecutionPolicy Bypass -WindowStyle Normal -File `"$scriptPath`""
+
+                if (-not (Test-Path $runOnceKey)) {
+                    New-Item -Path $runOnceKey -Force | Out-Null
+                }
+
+                Set-ItemProperty -Path $runOnceKey `
+                    -Name "*DellApplyUpdates" `
+                    -Value $runOnceCmd `
+                    -Type String
+
+                Write-Host "[INFO] RunOnce registry entry created:" -ForegroundColor Green
+                Write-Host "       Key  : $runOnceKey"
+                Write-Host "       Name : *DellApplyUpdates"
+                Write-Host "       Value: $runOnceCmd"
+
+                # --- Reboot ---
+                Write-Host "`n[INFO] Rebooting in 10 seconds to apply remaining updates at next logon..." -ForegroundColor Yellow
+                Start-Sleep -Seconds 10
+                Restart-Computer -Force
+                # Script execution stops here due to reboot
+                exit 0
+            }
+            else {
+                # ==========================================================
+                # ERROR PATH: /driverinstall failed → try /applyupdates now
+                # ==========================================================
+                Write-Host "[WARNING] /driverinstall FAILED (exit code: $diExitCode)." -ForegroundColor Yellow
+                Write-Host "[STEP 2] Falling back to /applyupdates ..." -ForegroundColor Yellow
+
+                $applyProc = Start-Process -FilePath $DCUCliPath `
+                    -ArgumentList "/applyupdates -silent -reboot=disable" `
+                    -Wait -PassThru -NoNewWindow -ErrorAction Stop
+
+                $auExitCode = $applyProc.ExitCode
+                Write-Host "[INFO] /applyupdates exit code: $auExitCode"
+
+                if ($auExitCode -in @(0, 1, 5, 500)) {
+                    Write-Host "[SUCCESS] /applyupdates completed (exit code: $auExitCode)." -ForegroundColor Green
+
+                    if ($auExitCode -eq 1) {
+                        Write-Host "[INFO] Reboot required. Rebooting in 10 seconds..." -ForegroundColor Yellow
+                        Start-Sleep -Seconds 10
+                        Restart-Computer -Force
+                        exit 0
+                    }
+                }
+                else {
+                    Write-Host "[ERROR] /applyupdates also failed (exit code: $auExitCode)." -ForegroundColor Red
+                    Write-Host "[ERROR] Manual intervention may be required." -ForegroundColor Red
+                }
+            }
+        }
+        catch {
+            # ==========================================================
+            # EXCEPTION PATH: Start-Process itself threw an error
+            # ==========================================================
+            Write-Host "[ERROR] Exception during Dell driver installation: $_" -ForegroundColor Red
+            Write-Host "[STEP 2] Attempting /applyupdates as fallback..." -ForegroundColor Yellow
+
+            try {
+                $fallbackProc = Start-Process -FilePath $DCUCliPath `
+                    -ArgumentList "/applyupdates -silent -reboot=disable" `
+                    -Wait -PassThru -NoNewWindow
+
+                Write-Host "[INFO] Fallback /applyupdates exit code: $($fallbackProc.ExitCode)"
+            }
+            catch {
+                Write-Host "[ERROR] Fallback /applyupdates also failed: $_" -ForegroundColor Red
             }
         }
     }
-
-    if ($dcuCliExitCode -gt 10) {
-        Write-Status "ERROR" "CRITICAL - Dell update process failed with severe exit code: $dcuCliExitCode. Exiting."
-        exit $dcuCliExitCode
-    } else {
-        Write-Status "STEP" "Dell update process completed (non-critical issues tolerated)."
+    else {
+        Write-Host "[WARNING] Dell Command Update CLI not found at: $DCUCliPath" -ForegroundColor Yellow
+        Write-Host "[WARNING] Skipping Dell driver installation." -ForegroundColor Yellow
     }
+
 }
 elseif ($manufacturer -like "*Hewlett-Packard*" -or $manufacturer -like "*HP*") {
     Write-Status "STEP" "Detected HP system. Proceeding with HP-specific actions..."
