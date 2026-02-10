@@ -95,175 +95,226 @@ if ($manufacturer -like "*Dell*") {
         exit $chocoExitCode
     }
     Write-Status "STEP" "Dell Command Update installed successfully."
+# =============================================================================
+# DELL DRIVER INSTALL LOOP — 3-Phase with RunOnce Chain (No Nested Here-Strings)
+# =============================================================================
 
-    # Define path to dcu-cli.exe
-    $DCUCliPath = "${env:ProgramFiles(x86)}\Dell\CommandUpdate\dcu-cli.exe"
-    if (-not (Test-Path $DCUCliPath)) {
-        Write-Status "ERROR" "CRITICAL - Dell Command Update CLI (dcu-cli.exe) not found at expected path: $dcuCliPath"
-        exit 1
+# --- Find DCU CLI ---
+$DCUCliPath = $null
+$dcuSearchPaths = @(
+    "C:\Program Files\Dell\CommandUpdate\dcu-cli.exe",
+    "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe"
+)
+foreach ($p in $dcuSearchPaths) {
+    if (Test-Path $p) { $DCUCliPath = $p; break }
+}
+
+if (-not $DCUCliPath) {
+    Write-Host "[ERROR] Dell Command Update CLI not found. Skipping." -ForegroundColor Red
+}
+else {
+    Write-Host "=============================================" -ForegroundColor Cyan
+    Write-Host " Dell Command Update — Phase 1"               -ForegroundColor Cyan
+    Write-Host " DCU: $DCUCliPath"                             -ForegroundColor Cyan
+    Write-Host "=============================================" -ForegroundColor Cyan
+
+    # Ensure C:\Temp exists
+    if (-not (Test-Path "C:\Temp")) {
+        New-Item -Path "C:\Temp" -ItemType Directory -Force | Out-Null
     }
 
-    # Enable Advanced Driver Restore
-    Write-Status "STEP" "Enabling Advanced Driver Restore in Dell Command Update..."
-    & $DCUCliPath /configure -advanceddriverrestore=enable
-    $dcuCliExitCode = $LASTEXITCODE
-    if ($dcuCliExitCode -ne 0) {
-        Write-Status "WARN" "WARNING - Failed to enable Advanced Driver Restore (Exit Code: $dcuCliExitCode). Continuing anyway."
-    } else {
-        Write-Status "STEP" "Advanced Driver Restore enabled."
+    # ──────────────────────────────────────────────────────────
+    # PRE-WRITE: Create Phase 2 and Phase 3 scripts up front
+    #            (eliminates nested here-string problem)
+    # ──────────────────────────────────────────────────────────
+
+    $phase2ScriptPath = "C:\Temp\dell-phase2-driverinstall.ps1"
+    $phase3ScriptPath = "C:\Temp\dell-phase3-applyupdates.ps1"
+    $runOnceKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
+
+    # --- Phase 3 Script: /applyupdates ---
+    $phase3Script = @'
+Start-Transcript -Path "C:\Temp\dell-phase3.log" -Append
+Write-Host "============================================="
+Write-Host " Dell Command Update — Phase 3: /applyupdates"
+Write-Host "============================================="
+
+$DCU = "##DCUPATH##"
+
+# Wait for network (up to 5 minutes)
+$timeout = 300; $elapsed = 0; $connected = $false
+while ($elapsed -lt $timeout) {
+    if (Test-Connection -ComputerName "dell.com" -Count 1 -Quiet -ErrorAction SilentlyContinue) {
+        Write-Host "[PHASE 3] Network available after ${elapsed}s."
+        $connected = $true
+        break
     }
-    # =============================================================================
-    # DELL DRIVER INSTALL LOOP — with /driverinstall -> /applyupdates fallback
-    # =============================================================================
+    Write-Host "[PHASE 3] Waiting for network... (${elapsed}s / ${timeout}s)"
+    Start-Sleep -Seconds 10
+    $elapsed += 10
+}
 
-    if (Test-Path $DCUCliPath) {
+if (-not $connected) {
+    Write-Host "[PHASE 3] ERROR: No network after ${timeout}s."
+    Stop-Transcript
+    exit 1
+}
 
-        Write-Host "=============================================" -ForegroundColor Cyan
-        Write-Host " Dell Command Update — Driver Installation"    -ForegroundColor Cyan
-        Write-Host "=============================================" -ForegroundColor Cyan
-
-        # ------------------------------------------------------------------
-        # STEP 1: Attempt /driverinstall (base drivers only)
-        # ------------------------------------------------------------------
-        Write-Host "`n[STEP 1] Running DCU /driverinstall ..." -ForegroundColor Cyan
-
-        try {
-            $driverInstallProc = Start-Process -FilePath $DCUCliPath `
-                -ArgumentList "/driverinstall -silent -reboot=disable" `
-                -Wait -PassThru -NoNewWindow -ErrorAction Stop
-
-            $diExitCode = $driverInstallProc.ExitCode
-            Write-Host "[INFO] /driverinstall exit code: $diExitCode"
-
-            <#  Dell Command Update CLI Exit Codes:
-                    0  = Completed successfully, no reboot required
-                    1  = Reboot required (updates applied successfully)
-                    2  = Fatal error during update
-                    3  = Error occurred during update
-                    4  = Invalid XML / CLI input error
-                    5  = No updates available
-                500  = No updates available (some DCU versions)
-            #>
-
-            # Define success codes
-            $successCodes = @(0, 1, 5, 500)
-
-            if ($diExitCode -in $successCodes) {
-                # ==========================================================
-                # SUCCESS PATH: schedule /applyupdates at next logon + reboot
-                # ==========================================================
-                Write-Host "[SUCCESS] /driverinstall completed successfully (exit code: $diExitCode)." -ForegroundColor Green
-
-                # --- Create a helper script for RunOnce ---
-                # This ensures /applyupdates runs elevated with logging
-$applyUpdatesScript = @'
-Start-Transcript -Path "C:\Temp\dell-applyupdates.log" -Append
-Write-Host "[RunOnce] Starting Dell Command Update /applyupdates ..."
-try {
-    $proc = Start-Process -FilePath "##DCUPATH##" `
+# Run /applyupdates with retry on 500
+$maxRetries = 3
+for ($i = 1; $i -le $maxRetries; $i++) {
+    Write-Host "`n[PHASE 3] Attempt $i/$maxRetries : /applyupdates"
+    $proc = Start-Process -FilePath $DCU `
         -ArgumentList "/applyupdates -silent -reboot=enable" `
         -Wait -PassThru -NoNewWindow
-    Write-Host "[RunOnce] /applyupdates exit code: $($proc.ExitCode)"
-} catch {
-    Write-Host "[RunOnce] ERROR: $_"
+
+    $code = $proc.ExitCode
+    Write-Host "[PHASE 3] Exit code: $code"
+
+    if ($code -in @(0, 1, 5)) {
+        Write-Host "[PHASE 3] /applyupdates completed successfully."
+        break
+    }
+    if ($code -eq 500 -and $i -lt $maxRetries) {
+        Write-Host "[PHASE 3] Network error (500). Retrying in 60s..."
+        Start-Sleep -Seconds 60
+        continue
+    }
+    Write-Host "[PHASE 3] /applyupdates failed (exit code: $code)."
 }
+
+# Cleanup both phase scripts
+Remove-Item -Path "C:\Temp\dell-phase2-driverinstall.ps1" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
 Stop-Transcript
 '@
+    $phase3Script = $phase3Script.Replace("##DCUPATH##", $DCUCliPath)
+    $phase3Script | Out-File -FilePath $phase3ScriptPath -Encoding UTF8 -Force
+    Write-Host "[PHASE 1] Phase 3 script written: $phase3ScriptPath"
 
-                # Now inject the actual DCU path into the script
-                $applyUpdatesScript = $applyUpdatesScript.Replace("##DCUPATH##", $DCUCliPath)
-                $scriptPath = "C:\Temp\dell-runonce-applyupdates.ps1"
+    # --- Phase 2 Script: /driverinstall retry ---
+    $phase2Script = @'
+Start-Transcript -Path "C:\Temp\dell-phase2.log" -Append
+Write-Host "============================================="
+Write-Host " Dell Command Update — Phase 2: /driverinstall retry"
+Write-Host "============================================="
 
-                # Ensure C:\Temp exists
-                if (-not (Test-Path "C:\Temp")) {
-                    New-Item -Path "C:\Temp" -ItemType Directory -Force | Out-Null
-                }
+$DCU = "##DCUPATH##"
+$phase3Path = "##PHASE3PATH##"
+$runOnceKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
 
-                # Write the helper script to disk
-                $applyUpdatesScript | Out-File -FilePath $scriptPath -Encoding UTF8 -Force
-                Write-Host "[INFO] Helper script written to: $scriptPath"
+Write-Host "[PHASE 2] Running /driverinstall ..."
+$proc = Start-Process -FilePath $DCU `
+    -ArgumentList "/driverinstall -silent -reboot=disable" `
+    -Wait -PassThru -NoNewWindow
 
-                # --- Register RunOnce entry ---
-                # Using '*' prefix on the value name ensures it runs even if
-                # the previous run didn't complete (safe-mode resilient).
-                $runOnceKey  = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
-                $runOnceCmd  = "powershell.exe -ExecutionPolicy Bypass -WindowStyle Normal -File `"$scriptPath`""
+$code = $proc.ExitCode
+Write-Host "[PHASE 2] /driverinstall exit code: $code"
 
-                if (-not (Test-Path $runOnceKey)) {
-                    New-Item -Path $runOnceKey -Force | Out-Null
-                }
+if ($code -in @(0, 1, 5)) {
+    Write-Host "[PHASE 2] /driverinstall succeeded!"
+    Write-Host "[PHASE 2] Setting RunOnce for Phase 3 (/applyupdates)..."
 
-                Set-ItemProperty -Path $runOnceKey `
-                    -Name "*DellApplyUpdates" `
-                    -Value $runOnceCmd `
-                    -Type String
+    $runOnceCmd = "powershell.exe -ExecutionPolicy Bypass -WindowStyle Normal -File ""$phase3Path"""
+    Set-ItemProperty -Path $runOnceKey -Name "*DellPhase3" -Value $runOnceCmd -Type String
 
-                Write-Host "[INFO] RunOnce registry entry created:" -ForegroundColor Green
-                Write-Host "       Key  : $runOnceKey"
-                Write-Host "       Name : *DellApplyUpdates"
-                Write-Host "       Value: $runOnceCmd"
+    Write-Host "[PHASE 2] RunOnce set. Rebooting in 15s..."
 
-                # --- Reboot ---
-                Write-Host "`n[INFO] Rebooting in 10 seconds to apply remaining updates at next logon..." -ForegroundColor Yellow
-                Start-Sleep -Seconds 10
-                Restart-Computer -Force
-                # Script execution stops here due to reboot
-                exit 0
-            }
-            else {
-                # ==========================================================
-                # ERROR PATH: /driverinstall failed → try /applyupdates now
-                # ==========================================================
-                Write-Host "[WARNING] /driverinstall FAILED (exit code: $diExitCode)." -ForegroundColor Yellow
-                Write-Host "[STEP 2] Falling back to /applyupdates ..." -ForegroundColor Yellow
+    # Cleanup this script
+    Remove-Item -Path $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
 
-                $applyProc = Start-Process -FilePath $DCUCliPath `
-                    -ArgumentList "/applyupdates -silent -reboot=disable" `
-                    -Wait -PassThru -NoNewWindow -ErrorAction Stop
+    Start-Sleep -Seconds 15
+    Restart-Computer -Force
+    exit 0
+}
+else {
+    Write-Host "[PHASE 2] /driverinstall FAILED again (exit code: $code)."
+    Write-Host "[PHASE 2] Manual intervention required."
+}
 
-                $auExitCode = $applyProc.ExitCode
-                Write-Host "[INFO] /applyupdates exit code: $auExitCode"
+# Cleanup this script
+Remove-Item -Path $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
+Stop-Transcript
+'@
+    $phase2Script = $phase2Script.Replace("##DCUPATH##", $DCUCliPath)
+    $phase2Script = $phase2Script.Replace("##PHASE3PATH##", $phase3ScriptPath)
+    $phase2Script | Out-File -FilePath $phase2ScriptPath -Encoding UTF8 -Force
+    Write-Host "[PHASE 1] Phase 2 script written: $phase2ScriptPath"
 
-                if ($auExitCode -in @(0, 1, 5, 500)) {
-                    Write-Host "[SUCCESS] /applyupdates completed (exit code: $auExitCode)." -ForegroundColor Green
+    # ──────────────────────────────────────────────────────────
+    # STEP 1: Enable Advanced Driver Restore
+    # ──────────────────────────────────────────────────────────
+    Write-Host "`n[PHASE 1] Enabling Advanced Driver Restore..." -ForegroundColor Cyan
 
-                    if ($auExitCode -eq 1) {
-                        Write-Host "[INFO] Reboot required. Rebooting in 10 seconds..." -ForegroundColor Yellow
-                        Start-Sleep -Seconds 10
-                        Restart-Computer -Force
-                        exit 0
-                    }
-                }
-                else {
-                    Write-Host "[ERROR] /applyupdates also failed (exit code: $auExitCode)." -ForegroundColor Red
-                    Write-Host "[ERROR] Manual intervention may be required." -ForegroundColor Red
-                }
-            }
-        }
-        catch {
-            # ==========================================================
-            # EXCEPTION PATH: Start-Process itself threw an error
-            # ==========================================================
-            Write-Host "[ERROR] Exception during Dell driver installation: $_" -ForegroundColor Red
-            Write-Host "[STEP 2] Attempting /applyupdates as fallback..." -ForegroundColor Yellow
+    $configProc = Start-Process -FilePath $DCUCliPath `
+        -ArgumentList "/configure -advancedDriverRestore=enable" `
+        -Wait -PassThru -NoNewWindow
 
-            try {
-                $fallbackProc = Start-Process -FilePath $DCUCliPath `
-                    -ArgumentList "/applyupdates -silent -reboot=disable" `
-                    -Wait -PassThru -NoNewWindow
+    Write-Host "[PHASE 1] Configure exit code: $($configProc.ExitCode)"
 
-                Write-Host "[INFO] Fallback /applyupdates exit code: $($fallbackProc.ExitCode)"
-            }
-            catch {
-                Write-Host "[ERROR] Fallback /applyupdates also failed: $_" -ForegroundColor Red
-            }
-        }
+    # ──────────────────────────────────────────────────────────
+    # STEP 2: Try /driverinstall
+    # ──────────────────────────────────────────────────────────
+    Write-Host "`n[PHASE 1] Running /driverinstall ..." -ForegroundColor Cyan
+
+    $diProc = Start-Process -FilePath $DCUCliPath `
+        -ArgumentList "/driverinstall -silent -reboot=disable" `
+        -Wait -PassThru -NoNewWindow
+
+    $diExitCode = $diProc.ExitCode
+    Write-Host "[PHASE 1] /driverinstall exit code: $diExitCode"
+
+    # ──────────────────────────────────────────────────────────
+    # BRANCH: Decide next step
+    # ──────────────────────────────────────────────────────────
+
+    if ($diExitCode -in @(0, 1, 5)) {
+        # ═══════════════════════════════════════════════════════
+        # SUCCESS → Jump to Phase 3 (skip Phase 2)
+        # ═══════════════════════════════════════════════════════
+        Write-Host "[PHASE 1] /driverinstall succeeded!" -ForegroundColor Green
+        Write-Host "[PHASE 1] Setting RunOnce for Phase 3 (/applyupdates)..." -ForegroundColor Cyan
+
+        $runOnceCmd = "powershell.exe -ExecutionPolicy Bypass -WindowStyle Normal -File `"$phase3ScriptPath`""
+        Set-ItemProperty -Path $runOnceKey -Name "*DellPhase3" -Value $runOnceCmd -Type String
+
+        # Clean up Phase 2 script (not needed)
+        Remove-Item -Path $phase2ScriptPath -Force -ErrorAction SilentlyContinue
+
+        Write-Host "[PHASE 1] RunOnce set: *DellPhase3" -ForegroundColor Green
+        Write-Host "[PHASE 1] Rebooting in 15s..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 15
+        Restart-Computer -Force
+        exit 0
+    }
+    elseif ($diExitCode -eq 2) {
+        # ═══════════════════════════════════════════════════════
+        # EXIT CODE 2 (ADR crash) → RunOnce Phase 2 → Reboot
+        # ═══════════════════════════════════════════════════════
+        Write-Host "[PHASE 1] /driverinstall failed (exit 2: ADR crash)." -ForegroundColor Yellow
+        Write-Host "[PHASE 1] Setting RunOnce for Phase 2 (retry after reboot)..." -ForegroundColor Cyan
+
+        $runOnceCmd = "powershell.exe -ExecutionPolicy Bypass -WindowStyle Normal -File `"$phase2ScriptPath`""
+        Set-ItemProperty -Path $runOnceKey -Name "*DellPhase2" -Value $runOnceCmd -Type String
+
+        Write-Host "[PHASE 1] RunOnce set: *DellPhase2" -ForegroundColor Green
+        Write-Host "[PHASE 1] Rebooting in 15s..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 15
+        Restart-Computer -Force
+        exit 0
     }
     else {
-        Write-Host "[WARNING] Dell Command Update CLI not found at: $DCUCliPath" -ForegroundColor Yellow
-        Write-Host "[WARNING] Skipping Dell driver installation." -ForegroundColor Yellow
-    }
+        # ═══════════════════════════════════════════════════════
+        # OTHER ERROR → Log and continue
+        # ═══════════════════════════════════════════════════════
+        Write-Host "[PHASE 1] /driverinstall failed (exit code: $diExitCode)." -ForegroundColor Red
+        Write-Host "[PHASE 1] Manual intervention may be required." -ForegroundColor Red
 
+        # Clean up pre-written scripts
+        Remove-Item -Path $phase2ScriptPath -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path $phase3ScriptPath -Force -ErrorAction SilentlyContinue
+    }
+}
 }
 elseif ($manufacturer -like "*Hewlett-Packard*" -or $manufacturer -like "*HP*") {
     Write-Status "STEP" "Detected HP system. Proceeding with HP-specific actions..."
