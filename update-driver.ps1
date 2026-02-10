@@ -138,16 +138,18 @@ Stop-Transcript
     & $DCUCliPath /driverinstall -silent -reboot=disable
     $exitCode = $LASTEXITCODE
 
-    if ($exitCode -in 0,1,5) {
+    if ($exitCode -in 0,1,2,5) {
         Write-Status STEP "Phase 1 success → scheduling Phase 3."
         Set-ItemProperty $runOnceKey '*DellPhase3' "powershell.exe -ExecutionPolicy Bypass -File `"$phase3Path`""
         Restart-Computer -Force
     }
+    <#
     elseif ($exitCode -eq 2) {
         Write-Status WARN "ADR crash detected → scheduling Phase 2."
         Set-ItemProperty $runOnceKey '*DellPhase2' "powershell.exe -ExecutionPolicy Bypass -File `"$phase2Path`""
         Restart-Computer -Force
     }
+    #>
     else {
         Write-Status ERROR "Dell driver install failed with exit code $exitCode."
     }
