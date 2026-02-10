@@ -114,7 +114,7 @@ if ($manufacturer -like '*Dell*') {
     # ---------------- PHASE 3 ----------------
 @"
 Start-Transcript C:\Temp\dell-phase3.log -Append
-`"$DCUCliPath`" /applyupdates -silent -reboot=enable
+& `"$DCUCliPath`" /applyupdates 
 Stop-Transcript
 Remove-Item `"$phase2Path`" -Force -ErrorAction SilentlyContinue
 Remove-Item `"$phase3Path`" -Force -ErrorAction SilentlyContinue
@@ -123,7 +123,7 @@ Remove-Item `"$phase3Path`" -Force -ErrorAction SilentlyContinue
     # ---------------- PHASE 2 ----------------
 @"
 Start-Transcript C:\Temp\dell-phase2.log -Append
-`"$DCUCliPath`" /driverinstall -silent -reboot=disable
+& `"$DCUCliPath`" /driverinstall 
 if (`$LASTEXITCODE -in 0,1,5) {
     Set-ItemProperty '$runOnceKey' '*DellPhase3' 'powershell.exe -ExecutionPolicy Bypass -File `"$phase3Path`"'
     Restart-Computer -Force
@@ -135,7 +135,7 @@ Stop-Transcript
     Write-Status STEP "Running Dell Phase 1 driver install..."
 
     & $DCUCliPath /configure -advancedDriverRestore=enable
-    & $DCUCliPath /driverinstall -silent -reboot=disable
+    & $DCUCliPath /driverinstall 
     $exitCode = $LASTEXITCODE
 
     if ($exitCode -in 0,1,2,5) {
