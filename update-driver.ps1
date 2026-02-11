@@ -114,7 +114,7 @@ if ($manufacturer -like '*Dell*') {
     # ---------------- PHASE 3 ----------------
 @"
 Start-Transcript C:\Temp\dell-phase3.log -Append
-& `"$DCUCliPath`" /applyupdates 
+& `"$DCUCliPath`" /applyupdates -forceUpdate=enable 
 Stop-Transcript
 Remove-Item `"$phase2Path`" -Force -ErrorAction SilentlyContinue
 Remove-Item `"$phase3Path`" -Force -ErrorAction SilentlyContinue
