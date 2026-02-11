@@ -41,7 +41,7 @@ $retryDelay = 10
 for ($i = 1; $i -le $maxRetries; $i++) {
     Write-Status INFO "Attempt $i of $maxRetries..."
     try {
-        $resp = Invoke-WebRequest -Uri "https://www.google.com" -Method Head -TimeoutSec 10
+        $resp = Invoke-WebRequest -Uri "https://www.google.com" -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
         if ($resp.StatusCode -eq 200) {
             Write-Status STEP "Internet connection confirmed."
             $connected = $true
