@@ -1,0 +1,1941 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+	<!--https://schneegans.de/windows/unattend-generator/?LanguageMode=Unattended&UILanguage=fr-FR&Locale=fr-FR&Keyboard=0000040c&GeoLocation=84&ProcessorArchitecture=amd64&ComputerNameMode=Script&ComputerNameScript=return+%27IUT3-%7B0%3AD5%7D%27+-f+%28+Get-Random+-Minimum+0+-Maximum+999+%29%3B&CompactOsMode=Never&TimeZoneMode=Explicit&TimeZone=Romance+Standard+Time&PartitionMode=Unattended&PartitionLayout=GPT&EspSize=300&RecoveryMode=Partition&RecoverySize=1000&DiskAssertionMode=Skip&WindowsEditionMode=Custom&ProductKey=NW6C2-QMPVW-D7KKK-3GKT6-VCFB2&InstallFromMode=Automatic&PEMode=Default&UserAccountMode=Unattended&AutoLogonMode=Builtin&BuiltinAdministratorPassword=&PasswordExpirationMode=Unlimited&LockoutMode=Default&HideFiles=Hidden&TaskbarSearch=Hide&TaskbarIconsMode=Default&DisableWidgets=true&LeftTaskbar=true&HideTaskViewButton=true&StartTilesMode=Empty&StartPinsMode=Empty&DisableAppSuggestions=true&HideEdgeFre=true&DeleteWindowsOld=true&EffectsMode=Performance&DesktopIconsMode=Custom&IconDesktop=true&IconRecycleBin=true&IconThisPC=true&StartFoldersMode=Default&WifiMode=Skip&ExpressSettings=DisableAll&LockKeysMode=Configure&CapsLockInitial=Off&CapsLockBehavior=Toggle&NumLockInitial=On&NumLockBehavior=Toggle&ScrollLockInitial=Off&ScrollLockBehavior=Toggle&StickyKeysMode=Default&ColorMode=Default&WallpaperMode=Solid&WallpaperColor=%23008080&LockScreenMode=Default&SystemScript0=%24attempts+%3D+0%0D%0Ado+%7B%0D%0A++++try+%7B%0D%0A++++++++%24uri+%3D+%5Buri%5D%3A%3Anew%28%27https%3A%2F%2Fraw.githubusercontent.com%2Fvijaidjearam%2Fwin11install%2Frefs%2Fheads%2Fmain%2Fupdate-driver.ps1%27%29%3B%0D%0A++++++++%24file+%3D+%27c%3A%5Cwindows%5Ctemp%5Cheader.ps1%27%3B%0D%0A++++++++%5BSystem.Net.WebClient%5D%3A%3Anew%28%29.DownloadFile%28%24uri%2C%24file%29%3B%0D%0A++++++++Write-Host+%22Download+successful%21%22%0D%0A++++++++break%0D%0A++++%7D+catch+%7B%0D%0A++++++++Write-Host+%22Download+failed%2C+retrying...%22%0D%0A++++++++Start-Sleep+-Seconds+5%0D%0A++++%7D%0D%0A++++%24attempts%2B%2B%0D%0A%7D+while+%28%24attempts+-lt+10%29&SystemScriptType0=Ps1&FirstLogonScript0=powershell.exe+-noexit+-ExecutionPolicy+Bypass+%22%26+%22c%3A%5Cwindows%5Ctemp%5Cheader.ps1%22%22&FirstLogonScriptType0=Cmd&WdacMode=Skip&AppLockerMode=Skip-->
+	<settings pass="offlineServicing"></settings>
+	<settings pass="windowsPE">
+		<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+			<UILanguage>fr-FR</UILanguage>
+		</component>
+		<component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+			<ImageInstall>
+				<OSImage>
+					<Compact>false</Compact>
+					<InstallTo>
+						<DiskID>0</DiskID>
+						<PartitionID>3</PartitionID>
+					</InstallTo>
+				</OSImage>
+			</ImageInstall>
+			<UserData>
+				<ProductKey>
+					<Key>NW6C2-QMPVW-D7KKK-3GKT6-VCFB2</Key>
+					<WillShowUI>OnError</WillShowUI>
+				</ProductKey>
+				<AcceptEula>true</AcceptEula>
+			</UserData>
+			<UseConfigurationSet>false</UseConfigurationSet>
+			<RunSynchronous>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>1</Order>
+					<Path>cmd.exe /c &gt;&gt;X:\diskpart.txt (echo:SELECT DISK=0&amp;echo:CLEAN&amp;echo:CONVERT GPT&amp;echo:CREATE PARTITION EFI SIZE=300&amp;echo:FORMAT QUICK FS=FAT32 LABEL=^"System^"&amp;echo:ASSIGN LETTER=S&amp;echo:CREATE PARTITION MSR SIZE=16&amp;echo:CREATE PARTITION PRIMARY)</Path>
+				</RunSynchronousCommand>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>2</Order>
+					<Path>cmd.exe /c &gt;&gt;X:\diskpart.txt (echo:SHRINK MINIMUM=1000&amp;echo:FORMAT QUICK FS=NTFS LABEL=^"Windows^"&amp;echo:ASSIGN LETTER=W&amp;echo:CREATE PARTITION PRIMARY&amp;echo:FORMAT QUICK FS=NTFS LABEL=^"Recovery^"&amp;echo:ASSIGN LETTER=R)</Path>
+				</RunSynchronousCommand>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>3</Order>
+					<Path>cmd.exe /c &gt;&gt;X:\diskpart.txt (echo:SET ID=^"de94bba4-06d1-4d40-a16a-bfd50179d6ac^"&amp;echo:GPT ATTRIBUTES=0x8000000000000001)</Path>
+				</RunSynchronousCommand>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>4</Order>
+					<Path>cmd.exe /c "diskpart.exe /s "X:\diskpart.txt" &gt;&gt;"X:\diskpart.log" || ( type "X:\diskpart.log" &amp; echo diskpart encountered an error. &amp; pause &amp; exit /b 1 )"</Path>
+				</RunSynchronousCommand>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>5</Order>
+					<Description>Load WinPE drivers from Ventoy</Description>
+					<Path>cmd.exe /c &quot;for %D in (C D E F G H I J K L M N O P Q R S T U V W X Y Z) do if exist %D:\DriversPE\LoadDriversPE.cmd (call %D:\DriversPE\LoadDriversPE.cmd &amp; exit /b 0)&quot;</Path>
+				</RunSynchronousCommand>
+			</RunSynchronous>
+		</component>
+        <!-- Driver Locations Configuration -->
+		<!-- For Dell, Driver packs could be downloaded from "https://www.dell.com/support/kbdoc/en-us/000180534/dell-family-driver-packs" and must be placed in the root folder "drivers"-->
+		<!-- For HP, Driver packs could be downloaded from "https://ftp.hp.com/pub/caps-softpaq/cmit/HP_WinPE_DriverPack.html" and must be placed in the root folder "drivers"-->
+		<component name="Microsoft-Windows-PnpCustomizationsWinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			<DriverPaths>
+				<!-- Common primary locations -->
+				<PathAndCredentials wcm:action="add" wcm:keyValue="1">
+					<Path>%SystemDrive%\drivers</Path>  <!-- Auto-detects system drive -->
+				</PathAndCredentials>
+				<PathAndCredentials wcm:action="add" wcm:keyValue="2">
+					<Path>%USB_DRIVE%\drivers</Path>  <!-- Placeholder for USB drives -->
+				</PathAndCredentials>
+				<!-- Standard drive letters for external storage or partitions -->
+				<PathAndCredentials wcm:action="add" wcm:keyValue="26">
+					<Path>[D-Z]:\drivers</Path>  <!-- Matches all common external/internal drive letters -->
+				</PathAndCredentials>
+			</DriverPaths>
+		</component>
+	</settings>
+	<settings pass="generalize"></settings>
+	<settings pass="specialize">
+		<component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+			<ComputerName>TEMPNAME</ComputerName>
+			<ProductKey>NW6C2-QMPVW-D7KKK-3GKT6-VCFB2</ProductKey>
+			<TimeZone>Romance Standard Time</TimeZone>
+		</component>
+		<component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+			<RunSynchronous>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>1</Order>
+					<Path>powershell.exe -WindowStyle "Normal" -NoProfile -Command "$xml = [xml]::new(); $xml.Load('C:\Windows\Panther\unattend.xml'); $sb = [scriptblock]::Create( $xml.unattend.Extensions.ExtractScript ); Invoke-Command -ScriptBlock $sb -ArgumentList $xml;"</Path>
+				</RunSynchronousCommand>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>2</Order>
+					<Path>powershell.exe -WindowStyle "Normal" -ExecutionPolicy "Unrestricted" -NoProfile -File "C:\Windows\Setup\Scripts\Specialize.ps1"</Path>
+				</RunSynchronousCommand>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>3</Order>
+					<Path>reg.exe load "HKU\DefaultUser" "C:\Users\Default\NTUSER.DAT"</Path>
+				</RunSynchronousCommand>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>4</Order>
+					<Path>powershell.exe -WindowStyle "Normal" -ExecutionPolicy "Unrestricted" -NoProfile -File "C:\Windows\Setup\Scripts\DefaultUser.ps1"</Path>
+				</RunSynchronousCommand>
+				<RunSynchronousCommand wcm:action="add">
+					<Order>5</Order>
+					<Path>reg.exe unload "HKU\DefaultUser"</Path>
+				</RunSynchronousCommand>
+			</RunSynchronous>
+		</component>
+	</settings>
+	<settings pass="auditSystem"></settings>
+	<settings pass="auditUser"></settings>
+	<settings pass="oobeSystem">
+		<component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+			<InputLocale>040c:0000040c</InputLocale>
+			<SystemLocale>fr-FR</SystemLocale>
+			<UILanguage>fr-FR</UILanguage>
+			<UserLocale>fr-FR</UserLocale>
+		</component>
+		<component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+			<UserAccounts>
+				<AdministratorPassword>
+					<Value></Value>
+					<PlainText>true</PlainText>
+				</AdministratorPassword>
+			</UserAccounts>
+			<AutoLogon>
+				<Username>Administrator</Username>
+				<Enabled>true</Enabled>
+				<LogonCount>1</LogonCount>
+				<Password>
+					<Value></Value>
+					<PlainText>true</PlainText>
+				</Password>
+			</AutoLogon>
+			<OOBE>
+				<ProtectYourPC>3</ProtectYourPC>
+				<HideEULAPage>true</HideEULAPage>
+				<HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+				<HideOnlineAccountScreens>false</HideOnlineAccountScreens>
+			</OOBE>
+			<FirstLogonCommands>
+				<SynchronousCommand wcm:action="add">
+					<Order>1</Order>
+					<CommandLine>powershell.exe -WindowStyle "Normal" -ExecutionPolicy "Unrestricted" -NoProfile -File "C:\Windows\Setup\Scripts\FirstLogon.ps1"</CommandLine>
+				</SynchronousCommand>
+			</FirstLogonCommands>
+		</component>
+	</settings>
+	<Extensions xmlns="https://schneegans.de/windows/unattend-generator/">
+		<ExtractScript>
+param(
+    [xml] $Document
+);
+
+foreach( $file in $Document.unattend.Extensions.File ) {
+    $path = [System.Environment]::ExpandEnvironmentVariables( $file.GetAttribute( 'path' ) );
+    mkdir -Path( $path | Split-Path -Parent ) -ErrorAction 'SilentlyContinue';
+    $encoding = switch( [System.IO.Path]::GetExtension( $path ) ) {
+        { $_ -in '.ps1', '.xml' } { [System.Text.Encoding]::UTF8; }
+        { $_ -in '.reg', '.vbs', '.js' } { [System.Text.UnicodeEncoding]::new( $false, $true ); }
+        default { [System.Text.Encoding]::Default; }
+    };
+    $bytes = $encoding.GetPreamble() + $encoding.GetBytes( $file.InnerText.Trim() );
+    [System.IO.File]::WriteAllBytes( $path, $bytes );
+}
+		</ExtractScript>
+		<File path="C:\Windows\Setup\Scripts\GetComputerName.ps1">
+return 'IUT3-{0:D5}' -f ( Get-Random -Minimum 0 -Maximum 999 );
+		</File>
+		<File path="C:\Windows\Setup\Scripts\SetComputerName.ps1">
+$ErrorActionPreference = 'Stop';
+Set-StrictMode -Version 'Latest';
+&amp; {
+	$newName = ( Get-Content -LiteralPath 'C:\Windows\Setup\Scripts\ComputerName.txt' -Raw ).Trim();
+	if( [string]::IsNullOrWhitespace( $newName ) ) {
+		throw "No computer name was provided.";
+	}
+
+	$keys = @(
+		@{
+			LiteralPath = 'Registry::HKLM\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName';
+			Name = 'ComputerName';
+		};
+		@{
+			LiteralPath = 'Registry::HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters';
+			Name = 'Hostname';
+		};
+		@{
+			LiteralPath = 'Registry::HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters';
+			Name = 'NV Hostname';
+		};
+	);
+
+	while( $true ) {
+		foreach( $key in $keys ) {
+			Set-ItemProperty @key -Type 'String' -Value $newName;
+		}
+		Start-Sleep -Milliseconds 50;
+	}
+} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; 'C:\Windows\Setup\Scripts\SetComputerName.log';
+		</File>
+		<File path="C:\Windows\Setup\Scripts\SetStartPins.ps1">
+$json = '{"pinnedList":[]}';
+if( [System.Environment]::OSVersion.Version.Build -lt 20000 ) {
+	return;
+}
+$key = 'Registry::HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Start';
+New-Item -Path $key -ItemType 'Directory' -ErrorAction 'SilentlyContinue';
+Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins' -Value $json -Type 'String';
+		</File>
+		<File path="C:\Users\Default\AppData\Local\Microsoft\Windows\Shell\LayoutModification.xml">
+&lt;LayoutModificationTemplate Version="1" xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification"&gt;
+	&lt;LayoutOptions StartTileGroupCellWidth="6" /&gt;
+	&lt;DefaultLayoutOverride&gt;
+		&lt;StartLayoutCollection&gt;
+			&lt;StartLayout GroupCellWidth="6" xmlns="http://schemas.microsoft.com/Start/2014/FullDefaultLayout" /&gt;
+		&lt;/StartLayoutCollection&gt;
+	&lt;/DefaultLayoutOverride&gt;
+&lt;/LayoutModificationTemplate&gt;
+		</File>
+		<File path="C:\Windows\Setup\Scripts\SetWallpaper.ps1">
+Add-Type -TypeDefinition '
+	using System.Drawing;
+	using System.Runtime.InteropServices;
+	
+	public static class WallpaperSetter {
+		[DllImport("user32.dll")]
+		private static extern bool SetSysColors(
+			int cElements, 
+			int[] lpaElements,
+			int[] lpaRgbValues
+		);
+
+		[DllImport("user32.dll")]
+		private static extern bool SystemParametersInfo(
+			uint uiAction,
+			uint uiParam,
+			string pvParam,
+			uint fWinIni
+		);
+
+		public static void SetDesktopBackground(Color color) {
+			SystemParametersInfo(20, 0, "", 0);
+			SetSysColors(1, new int[] { 1 }, new int[] { ColorTranslator.ToWin32(color) });
+		}
+
+		public static void SetDesktopImage(string file) {
+			SystemParametersInfo(20, 0, file, 0);
+		}
+	}
+' -ReferencedAssemblies 'System.Drawing';
+
+function Set-WallpaperColor {
+	param(
+		[string]
+		$HtmlColor
+	);
+
+	$color = [System.Drawing.ColorTranslator]::FromHtml( $HtmlColor );
+	[WallpaperSetter]::SetDesktopBackground( $color );
+	Set-ItemProperty -Path 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers' -Name 'BackgroundType' -Type 'DWord' -Value 1 -Force;
+	Set-ItemProperty -Path 'Registry::HKCU\Control Panel\Desktop' -Name 'WallPaper' -Type 'String' -Value '' -Force;
+	Set-ItemProperty -Path 'Registry::HKCU\Control Panel\Colors' -Name 'Background' -Type 'String' -Value "$($color.R) $($color.G) $($color.B)" -Force;
+}
+
+function Set-WallpaperImage {
+	param(
+		[string]
+		$LiteralPath
+	);
+
+	if( $LiteralPath | Test-Path ) {
+		[WallpaperSetter]::SetDesktopImage( $LiteralPath );
+		Set-ItemProperty -Path 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers' -Name 'BackgroundType' -Type 'DWord' -Value 0 -Force;
+		Set-ItemProperty -Path 'Registry::HKCU\Control Panel\Desktop' -Name 'WallPaper' -Type 'String' -Value $LiteralPath -Force;
+	} else {
+		"Cannot use '$LiteralPath' as a desktop wallpaper because that file does not exist.";
+	}
+}
+Set-WallpaperColor -HtmlColor '#008080';
+		</File>
+		<File path="C:\Windows\Setup\Scripts\update-driver.ps1">
+        #Requires -RunAsAdministrator
+Set-StrictMode -Version Latest
+$ErrorActionPreference = &apos;Stop&apos;
+
+#===================================================================
+#  CONFIGURATION
+#===================================================================
+$Script:TempFolder       = &quot;C:\Temp&quot;
+$Script:PersistentScript = &quot;C:\Temp\DriverUpdateScript.ps1&quot;
+$Script:StateFile        = &quot;C:\Temp\DriverUpdateState.json&quot;
+$Script:LogFile          = &quot;C:\Temp\DriverUpdateScript.log&quot;
+$Script:RunOnceKey       = &apos;HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce&apos;
+$Script:RunOnceName      = &apos;DriverUpdateScript_RunOnce&apos;
+$Script:DriverTimeout    = 300
+$Script:CooldownSeconds  = 5
+$Script:DriverProcesses  = @(&apos;drvinst&apos;,&apos;pnputil&apos;,&apos;DPInst&apos;,&apos;DPInst64&apos;,&apos;SetupAPI&apos;)
+$Script:SpinnerFrames    = @(&apos;[ ]&apos;,&apos;[= ]&apos;,&apos;[== ]&apos;,&apos;[=== ]&apos;,&apos;[====]&apos;,&apos;[ ===]&apos;,&apos;[ ==]&apos;,&apos;[ =]&apos;)
+$Script:ChocoSourceName  = &apos;chocosia&apos;
+$Script:ChocoSourceUrl   = &apos;http://choco.local.xyz.com/repository/chocolatey-group&apos;
+
+#===================================================================
+#  INITIALISATION
+#===================================================================
+function Initialize-PersistentScript {
+    if (-not (Test-Path $Script:TempFolder)) {
+        New-Item -Path $Script:TempFolder -ItemType Directory -Force | Out-Null
+    }
+    $currentScript = $MyInvocation.ScriptName
+    if (-not $currentScript) { $currentScript = $PSCommandPath }
+    if ($currentScript -and $currentScript -ne $Script:PersistentScript) {
+        if (Test-Path $currentScript) {
+            Write-Host &quot;[INIT] Copying script to $Script:PersistentScript&quot; -ForegroundColor Yellow
+            Copy-Item -Path $currentScript -Destination $Script:PersistentScript -Force
+            Write-Host &quot;[INIT] Script copied successfully.&quot; -ForegroundColor Green
+        }
+    }
+    if (-not (Test-Path $Script:PersistentScript)) {
+        Write-Host &quot;[ERROR] Persistent script could not be created.&quot; -ForegroundColor Red
+        return $false
+    }
+    return $true
+}
+
+#===================================================================
+#  LOGGING HELPERS
+#===================================================================
+function Write-Status {
+    param(
+        [Parameter(Mandatory)]
+        [ValidateSet(&apos;ERROR&apos;,&apos;WARN&apos;,&apos;INFO&apos;,&apos;STEP&apos;,&apos;OK&apos;,&apos;PROGRESS&apos;,&apos;DEBUG&apos;,&apos;DRIVER&apos;,&apos;TIME&apos;,&apos;SKIP&apos;,&apos;KILL&apos;)]
+        [string]$Level,
+        [Parameter(Mandatory)][string]$Message
+    )
+    $timestamp = Get-Date -Format &quot;HH:mm:ss&quot;
+    $color = switch ($Level.ToUpper()) {
+        &apos;ERROR&apos;    { &apos;Red&apos; }
+        &apos;WARN&apos;     { &apos;Yellow&apos; }
+        &apos;INFO&apos;     { &apos;Cyan&apos; }
+        &apos;STEP&apos;     { &apos;Magenta&apos; }
+        &apos;OK&apos;       { &apos;Green&apos; }
+        &apos;PROGRESS&apos; { &apos;White&apos; }
+        &apos;DEBUG&apos;    { &apos;DarkGray&apos; }
+        &apos;DRIVER&apos;   { &apos;Blue&apos; }
+        &apos;TIME&apos;     { &apos;DarkYellow&apos; }
+        &apos;SKIP&apos;     { &apos;DarkMagenta&apos; }
+        &apos;KILL&apos;     { &apos;Red&apos; }
+        default    { &apos;White&apos; }
+    }
+    $prefix = switch ($Level.ToUpper()) {
+        &apos;ERROR&apos;    { &apos;[X]&apos; }
+        &apos;WARN&apos;     { &apos;[!]&apos; }
+        &apos;INFO&apos;     { &apos;[i]&apos; }
+        &apos;STEP&apos;     { &apos;[&gt;]&apos; }
+        &apos;OK&apos;       { &apos;[+]&apos; }
+        &apos;PROGRESS&apos; { &apos;[o]&apos; }
+        &apos;DEBUG&apos;    { &apos;[.]&apos; }
+        &apos;DRIVER&apos;   { &apos;[D]&apos; }
+        &apos;TIME&apos;     { &apos;[T]&apos; }
+        &apos;SKIP&apos;     { &apos;[S]&apos; }
+        &apos;KILL&apos;     { &apos;[K]&apos; }
+        default    { &apos;[ ]&apos; }
+    }
+    Write-Host &quot;[$timestamp] $prefix $Message&quot; -ForegroundColor $color
+}
+
+function Write-Banner {
+    param([string]$Text)
+    Write-Host &quot;&quot;
+    Write-Host (&quot;=&quot; * 70) -ForegroundColor Magenta
+    Write-Host &quot;  $Text&quot; -ForegroundColor Magenta
+    Write-Host (&quot;=&quot; * 70) -ForegroundColor Magenta
+    Write-Host &quot;&quot;
+}
+
+function Write-SubBanner {
+    param([string]$Text)
+    Write-Host &quot;&quot;
+    Write-Host &quot;--- $Text ---&quot; -ForegroundColor Yellow
+    Write-Host &quot;&quot;
+}
+
+function Format-Duration {
+    param([double]$Seconds)
+    if ($Seconds -lt 60) {
+        return &quot;{0:N1}s&quot; -f $Seconds
+    }
+    elseif ($Seconds -lt 3600) {
+        $m = [math]::Floor($Seconds / 60)
+        $s = $Seconds % 60
+        return &quot;{0}m {1:N0}s&quot; -f $m, $s
+    }
+    else {
+        $h = [math]::Floor($Seconds / 3600)
+        $m = [math]::Floor(($Seconds % 3600) / 60)
+        return &quot;{0}h {1}m&quot; -f $h, $m
+    }
+}
+
+function Get-ConsoleWidth {
+    $w = 100
+    try {
+        $w = [Console]::WindowWidth - 5
+        if ($w -lt 50) { $w = 100 }
+    }
+    catch { }
+    return $w
+}
+
+function Write-DriverHeader {
+    param([string]$DriverName, [int]$Current, [int]$Total)
+    if ($Total -le 0) { $Total = 1 }
+    $pct = [math]::Round(($Current / $Total) * 100)
+    $filled = [math]::Floor($pct / 5)
+    $empty = 20 - $filled
+    $bar = &quot;[&quot; + (&quot;#&quot; * $filled) + (&quot;-&quot; * $empty) + &quot;]&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;  ======================================================================&quot; -ForegroundColor DarkCyan
+    Write-Host &quot;  $bar $pct% ($Current of $Total drivers)&quot; -ForegroundColor Cyan
+    Write-Host &quot;  Driver: $DriverName&quot; -ForegroundColor White
+    Write-Host &quot;  Timeout: $Script:DriverTimeout seconds | Monitoring: drvinst.exe&quot; -ForegroundColor DarkGray
+    Write-Host &quot;  ======================================================================&quot; -ForegroundColor DarkCyan
+}
+
+#===================================================================
+#  PROCESS-HANDLING HELPERS
+#===================================================================
+function Get-DriverInstallProcesses {
+    [System.Collections.ArrayList]$collector = @()
+    foreach ($name in $Script:DriverProcesses) {
+        $found = $null
+        try { $found = Get-Process -Name $name -ErrorAction SilentlyContinue } catch { }
+        if ($null -ne $found) {
+            foreach ($p in @($found)) { [void]$collector.Add($p) }
+        }
+    }
+    $arr = [object[]]$collector.ToArray()
+    return ,$arr
+}
+
+function Stop-DriverInstallProcesses {
+    param([switch]$Silent)
+    $killed = 0
+    foreach ($name in $Script:DriverProcesses) {
+        $found = $null
+        try { $found = Get-Process -Name $name -ErrorAction SilentlyContinue } catch { }
+        if ($null -ne $found) {
+            foreach ($proc in @($found)) {
+                if (-not $Silent) {
+                    Write-Status KILL &quot;Terminating: $($proc.ProcessName) (PID $($proc.Id))&quot;
+                }
+                try { $proc.CloseMainWindow() | Out-Null } catch { }
+                Start-Sleep -Milliseconds 300
+                try {
+                    if (-not $proc.HasExited) {
+                        Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+                    }
+                }
+                catch { }
+                $killed++
+            }
+        }
+    }
+    foreach ($name in $Script:DriverProcesses) {
+        try {
+            $saveEA = $ErrorActionPreference
+            $ErrorActionPreference = &apos;SilentlyContinue&apos;
+            $null = cmd.exe /c &quot;taskkill /F /IM `&quot;$name.exe`&quot; &gt;nul 2&gt;&amp;1&quot;
+            $ErrorActionPreference = $saveEA
+        }
+        catch {
+            try { $ErrorActionPreference = $saveEA } catch { }
+        }
+    }
+    return $killed
+}
+
+function Wait-ForDriverProcesses {
+    param([int]$TimeoutSeconds = 30)
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($sw.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
+        $procs = Get-DriverInstallProcesses
+        $procCount = ($procs | Measure-Object).Count
+        if ($procCount -eq 0) { return $true }
+        Start-Sleep -Milliseconds 500
+    }
+    return $false
+}
+
+function Clear-DriverInstallEnvironment {
+    $procs = Get-DriverInstallProcesses
+    $procCount = ($procs | Measure-Object).Count
+    if ($procCount -gt 0) {
+        Write-Status WARN &quot;Found $procCount leftover driver process(es) - cleaning up...&quot;
+        $k = Stop-DriverInstallProcesses
+        Write-Status INFO &quot;Terminated $k process(es)&quot;
+        Start-Sleep -Seconds 2
+    }
+}
+
+#===================================================================
+#  VERBOSE COMMAND EXECUTION (real-time stdout/stderr streaming)
+#===================================================================
+function Invoke-CommandVerbose {
+    &lt;#
+    .SYNOPSIS
+        Starts a process, streams stdout/stderr line-by-line with timestamps,
+        shows a heartbeat if silent for 30s, saves a full log, returns exit code.
+    #&gt;
+    param(
+        [Parameter(Mandatory)][string]$FilePath,
+        [Parameter(Mandatory)][string]$Arguments,
+        [Parameter(Mandatory)][string]$Label
+    )
+
+    if (-not (Test-Path $FilePath)) {
+        Write-Status ERROR &quot;Executable not found: $FilePath&quot;
+        return 999
+    }
+
+    $exeName = Split-Path $FilePath -Leaf
+    Write-Status INFO &quot;Executing: $exeName $Arguments&quot;
+    Write-Host &quot;&quot;
+
+    $psi = [System.Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName = $FilePath
+    $psi.Arguments = $Arguments
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.CreateNoWindow = $true
+
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $psi
+
+    try {
+        $null = $process.Start()
+    }
+    catch {
+        Write-Status ERROR &quot;Failed to start $exeName : $($_.Exception.Message)&quot;
+        return 999
+    }
+
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    $lastActivity = [System.Diagnostics.Stopwatch]::StartNew()
+    $heartbeatSec = 30
+    $logLines = [System.Collections.ArrayList]::new()
+
+    # Async line readers for stdout and stderr
+    $stdoutTask = $process.StandardOutput.ReadLineAsync()
+    $stderrTask = $process.StandardError.ReadLineAsync()
+    $stdoutDone = $false
+    $stderrDone = $false
+
+    while ((-not $stdoutDone) -or (-not $stderrDone)) {
+        $activity = $false
+
+        # --- stdout ---
+        if ((-not $stdoutDone) -and $stdoutTask.IsCompleted) {
+            $line = $null
+            try { $line = $stdoutTask.Result } catch { $stdoutDone = $true; continue }
+            if ($null -ne $line) {
+                $trimmed = $line.Trim()
+                if ($trimmed) {
+                    $ts = Get-Date -Format &apos;HH:mm:ss&apos;
+                    Write-Host &quot;  [$ts] [$Label] $trimmed&quot; -ForegroundColor White
+                    [void]$logLines.Add(&quot;[$ts] $trimmed&quot;)
+                }
+                $stdoutTask = $process.StandardOutput.ReadLineAsync()
+                $activity = $true
+                $lastActivity.Restart()
+            }
+            else {
+                $stdoutDone = $true
+            }
+        }
+
+        # --- stderr ---
+        if ((-not $stderrDone) -and $stderrTask.IsCompleted) {
+            $line = $null
+            try { $line = $stderrTask.Result } catch { $stderrDone = $true; continue }
+            if ($null -ne $line) {
+                $trimmed = $line.Trim()
+                if ($trimmed) {
+                    $ts = Get-Date -Format &apos;HH:mm:ss&apos;
+                    Write-Host &quot;  [$ts] [$Label] $trimmed&quot; -ForegroundColor Yellow
+                    [void]$logLines.Add(&quot;[$ts] [WARN] $trimmed&quot;)
+                }
+                $stderrTask = $process.StandardError.ReadLineAsync()
+                $activity = $true
+                $lastActivity.Restart()
+            }
+            else {
+                $stderrDone = $true
+            }
+        }
+
+        # --- heartbeat when process is silent ---
+        if ((-not $activity) -and ($lastActivity.Elapsed.TotalSeconds -ge $heartbeatSec)) {
+            $ts = Get-Date -Format &apos;HH:mm:ss&apos;
+            $elapsed = [math]::Round($sw.Elapsed.TotalSeconds)
+            Write-Host &quot;  [$ts] [$Label] ... still running (${elapsed}s elapsed)&quot; -ForegroundColor DarkGray
+            [void]$logLines.Add(&quot;[$ts] [heartbeat] ${elapsed}s elapsed&quot;)
+            $lastActivity.Restart()
+        }
+
+        if (-not $activity) {
+            Start-Sleep -Milliseconds 100
+        }
+    }
+
+    $process.WaitForExit()
+    $sw.Stop()
+    $exitCode = $process.ExitCode
+
+    # Save detailed log
+    $safeLabel = $Label -replace &apos;[^a-zA-Z0-9]&apos;, &apos;_&apos;
+    $logFile = Join-Path $Script:TempFolder &quot;${safeLabel}_$(Get-Date -Format &apos;yyyyMMdd_HHmmss&apos;).log&quot;
+    try {
+        $header = &quot;Command : $FilePath $Arguments`nExit    : $exitCode`nDuration: $(Format-Duration $sw.Elapsed.TotalSeconds)`n$(&apos;=&apos; * 60)`n&quot;
+        $body = ($logLines | ForEach-Object { $_ }) -join &quot;`n&quot;
+        &quot;$header$body&quot; | Out-File $logFile -Encoding UTF8 -Force
+    }
+    catch { }
+
+    Write-Host &quot;&quot;
+    Write-Status TIME &quot;Completed in $(Format-Duration $sw.Elapsed.TotalSeconds)&quot;
+    Write-Status INFO &quot;Exit code: $exitCode&quot;
+    Write-Status DEBUG &quot;Log: $logFile&quot;
+
+    try { $process.Dispose() } catch { }
+    return $exitCode
+}
+
+#===================================================================
+#  CHOCOLATEY PATH HELPER
+#===================================================================
+function Get-ChocoExePath {
+    $cmd = Get-Command choco -ErrorAction SilentlyContinue
+    if ($null -ne $cmd) { return $cmd.Source }
+    $default = &quot;$env:ProgramData\chocolatey\bin\choco.exe&quot;
+    if (Test-Path $default) { return $default }
+    return $null
+}
+
+#===================================================================
+#  DEVICE SCANNING &amp; INF MATCHING
+#===================================================================
+function Get-SystemDeviceIds {
+    $ids = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    $deviceCount = 0
+    $problemDeviceNames = [System.Collections.ArrayList]::new()
+    try {
+        $devices = @(Get-CimInstance Win32_PnPEntity -ErrorAction Stop)
+        $deviceCount = ($devices | Measure-Object).Count
+        foreach ($dev in $devices) {
+            if ($null -ne $dev.HardwareID) {
+                foreach ($hwid in @($dev.HardwareID)) {
+                    if ($hwid) { [void]$ids.Add($hwid) }
+                }
+            }
+            if ($null -ne $dev.CompatibleID) {
+                foreach ($cid in @($dev.CompatibleID)) {
+                    if ($cid) { [void]$ids.Add($cid) }
+                }
+            }
+            if ($null -ne $dev.ConfigManagerErrorCode -and $dev.ConfigManagerErrorCode -ne 0) {
+                $devName = $dev.Name
+                if (-not $devName) { $devName = $dev.DeviceID }
+                [void]$problemDeviceNames.Add(&quot;$devName (error $($dev.ConfigManagerErrorCode))&quot;)
+            }
+        }
+    }
+    catch {
+        Write-Status WARN &quot;WMI device scan failed: $($_.Exception.Message)&quot;
+    }
+    if ($ids.Count -eq 0) {
+        Write-Status INFO &quot;Trying Get-PnpDevice as fallback...&quot;
+        try {
+            $pnpDevs = @(Get-PnpDevice -ErrorAction SilentlyContinue)
+            $deviceCount = ($pnpDevs | Measure-Object).Count
+            foreach ($dev in $pnpDevs) {
+                try {
+                    $hwProp = $dev | Get-PnpDeviceProperty -KeyName &apos;DEVPKEY_Device_HardwareIds&apos; -ErrorAction SilentlyContinue
+                    if ($null -ne $hwProp -and $null -ne $hwProp.Data) {
+                        foreach ($id in @($hwProp.Data)) { if ($id) { [void]$ids.Add($id) } }
+                    }
+                }
+                catch { }
+                try {
+                    $cProp = $dev | Get-PnpDeviceProperty -KeyName &apos;DEVPKEY_Device_CompatibleIds&apos; -ErrorAction SilentlyContinue
+                    if ($null -ne $cProp -and $null -ne $cProp.Data) {
+                        foreach ($id in @($cProp.Data)) { if ($id) { [void]$ids.Add($id) } }
+                    }
+                }
+                catch { }
+            }
+        }
+        catch {
+            Write-Status WARN &quot;Get-PnpDevice fallback also failed: $($_.Exception.Message)&quot;
+        }
+    }
+    Write-Status OK &quot;Scanned $deviceCount device(s), found $($ids.Count) unique hardware/compatible ID(s).&quot;
+    $probCount = ($problemDeviceNames | Measure-Object).Count
+    if ($probCount -gt 0) {
+        Write-Status WARN &quot;$probCount device(s) with problems (may need drivers):&quot;
+        foreach ($pd in $problemDeviceNames) {
+            Write-Status INFO &quot;  - $pd&quot;
+        }
+    }
+    else {
+        Write-Status OK &quot;No devices with driver problems detected.&quot;
+    }
+    return $ids
+}
+
+function Get-InfHardwareIds {
+    param([Parameter(Mandatory)][string]$InfPath)
+    $hardwareIds = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    try { $lines = @(Get-Content $InfPath -ErrorAction Stop) }
+    catch { return @($hardwareIds) }
+    $lineCount = ($lines | Measure-Object).Count
+    if ($lineCount -eq 0) { return @($hardwareIds) }
+    $modelSections = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    $inManufacturer = $false
+    foreach ($line in $lines) {
+        $trimmed = $line.Trim()
+        if ($trimmed.StartsWith(&apos;;&apos;)) { continue }
+        if ($trimmed -match &apos;^\[Manufacturer\]\s*$&apos;) { $inManufacturer = $true; continue }
+        if ($inManufacturer) {
+            if ($trimmed -match &apos;^\[&apos;) { $inManufacturer = $false; continue }
+            if (-not $trimmed) { continue }
+            if ($trimmed -match &apos;=&apos;) {
+                $rightSide = ($trimmed -split &apos;=&apos;, 2)[1]
+                if ($null -eq $rightSide) { continue }
+                $parts = $rightSide -split &apos;,&apos;
+                $baseName = $parts[0].Trim()
+                if (-not $baseName) { continue }
+                [void]$modelSections.Add($baseName)
+                $partCount = ($parts | Measure-Object).Count
+                for ($j = 1; $j -lt $partCount; $j++) {
+                    $decoration = $parts[$j].Trim()
+                    if ($decoration) { [void]$modelSections.Add(&quot;$baseName.$decoration&quot;) }
+                }
+            }
+        }
+    }
+    foreach ($section in @($modelSections)) {
+        $sectionHeader = &quot;[$section]&quot;
+        $inSection = $false
+        foreach ($line in $lines) {
+            $trimmed = $line.Trim()
+            if ($trimmed.StartsWith(&apos;;&apos;)) { continue }
+            if ($trimmed -ieq $sectionHeader) { $inSection = $true; continue }
+            if ($inSection) {
+                if ($trimmed -match &apos;^\[&apos;) { $inSection = $false; continue }
+                if (-not $trimmed) { continue }
+                if ($trimmed -match &apos;=&apos;) {
+                    $rightSide = ($trimmed -split &apos;=&apos;, 2)[1]
+                    if ($null -eq $rightSide) { continue }
+                    $idParts = $rightSide -split &apos;,&apos;
+                    $idPartCount = ($idParts | Measure-Object).Count
+                    for ($j = 1; $j -lt $idPartCount; $j++) {
+                        $hwid = $idParts[$j].Trim().Trim(&apos;&quot;&apos;).Trim()
+                        if ($hwid -and $hwid -match &apos;\\&apos;) { [void]$hardwareIds.Add($hwid) }
+                    }
+                }
+            }
+        }
+    }
+    return @($hardwareIds)
+}
+
+function Test-InfMatchesSystem {
+    param(
+        [Parameter(Mandatory)][string]$InfPath,
+        [Parameter(Mandatory)][System.Collections.Generic.HashSet[string]]$SystemIds
+    )
+    $infIds = Get-InfHardwareIds -InfPath $InfPath
+    $infIdCount = ($infIds | Measure-Object).Count
+    if ($infIdCount -eq 0) { return $true }
+    foreach ($infId in $infIds) {
+        if ($SystemIds.Contains($infId)) { return $true }
+    }
+    return $false
+}
+
+#===================================================================
+#  STATE-MANAGEMENT HELPERS
+#===================================================================
+function Get-ScriptState {
+    if (Test-Path $Script:StateFile) {
+        try {
+            $json = Get-Content $Script:StateFile -Raw -ErrorAction Stop | ConvertFrom-Json
+            $defaults = @{
+                Phase = 0; VentoyCompleted = $false; VentoyRebootDone = $false
+                VentoyProcessedDrivers = @(); VentoyDriverRoot = &quot;&quot;
+                ManufacturerPhase = 0; DellADRFailed = $false; LastExitCode = 0
+                RebootCount = 0; TotalDriversAdded = 0; TotalDriversInstalled = 0
+                TotalDriversFailed = 0; TotalDriversSkipped = 0
+                TotalDriversTimedOut = 0; TotalTimeSpent = 0; TotalProcessesKilled = 0
+            }
+            foreach ($k in $defaults.Keys) {
+                if (-not $json.PSObject.Properties[$k]) {
+                    $json | Add-Member -NotePropertyName $k -NotePropertyValue $defaults[$k] -Force
+                }
+            }
+            return $json
+        }
+        catch {
+            Write-Status WARN &quot;Failed reading state file - starting fresh: $($_.Exception.Message)&quot;
+        }
+    }
+    return [PSCustomObject]@{
+        Phase = 0; VentoyCompleted = $false; VentoyRebootDone = $false
+        VentoyProcessedDrivers = @(); VentoyDriverRoot = &quot;&quot;
+        ManufacturerPhase = 0; DellADRFailed = $false; LastExitCode = 0
+        RebootCount = 0; TotalDriversAdded = 0; TotalDriversInstalled = 0
+        TotalDriversFailed = 0; TotalDriversSkipped = 0
+        TotalDriversTimedOut = 0; TotalTimeSpent = 0; TotalProcessesKilled = 0
+    }
+}
+
+function Set-ScriptState {
+    param([pscustomobject]$State)
+    $State | ConvertTo-Json -Depth 10 | Out-File $Script:StateFile -Encoding UTF8 -Force
+}
+
+function Remove-ScriptState {
+    Write-Status INFO &quot;Removing state file and RunOnce entry...&quot;
+    if (Test-Path $Script:StateFile) { Remove-Item $Script:StateFile -Force -ErrorAction SilentlyContinue }
+    try {
+        $rk64 = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
+            [Microsoft.Win32.RegistryHive]::LocalMachine,
+            [Microsoft.Win32.RegistryView]::Registry64
+        ).OpenSubKey(&apos;SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce&apos;, $true)
+        if ($null -ne $rk64) { $rk64.DeleteValue($Script:RunOnceName, $false); $rk64.Close() }
+    }
+    catch { }
+    $fallback = &quot;$($Script:RunOnceName)_Task&quot;
+    try {
+        $existingTask = Get-ScheduledTask -TaskName $fallback -ErrorAction SilentlyContinue
+        if ($null -ne $existingTask) {
+            Unregister-ScheduledTask -TaskName $fallback -Confirm:$false -ErrorAction SilentlyContinue
+            Write-Status INFO &quot;Deleted fallback Scheduled-Task: $fallback&quot;
+        }
+    }
+    catch { }
+    Write-Status OK &quot;Cleanup finished.&quot;
+}
+
+#===================================================================
+#  RUNONCE HELPERS
+#===================================================================
+function Set-RunOnceEntry {
+    param([Parameter(Mandatory)][string]$Name, [Parameter(Mandatory)][string]$Command)
+    try {
+        $rk64 = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
+            [Microsoft.Win32.RegistryHive]::LocalMachine,
+            [Microsoft.Win32.RegistryView]::Registry64
+        ).OpenSubKey(&apos;SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce&apos;, $true)
+        $rk64.SetValue($Name, $Command, [Microsoft.Win32.RegistryValueKind]::String)
+        $rk64.Close()
+        Write-Status OK &quot;RunOnce entry created (64-bit): $Name&quot;
+        return $true
+    }
+    catch {
+        Write-Status WARN &quot;Failed to write RunOnce (64-bit): $($_.Exception.Message)&quot;
+        return $false
+    }
+}
+
+function Set-RunOnceTask {
+    param([Parameter(Mandatory)][string]$Name, [Parameter(Mandatory)][string]$ScriptPath)
+    $taskAction = New-ScheduledTaskAction -Execute &apos;powershell.exe&apos; -Argument &quot;-NoLogo -NoProfile -ExecutionPolicy Bypass -File `&quot;$ScriptPath`&quot;&quot;
+    $taskTrigger = New-ScheduledTaskTrigger -AtStartup
+    $principal = New-ScheduledTaskPrincipal -UserId &apos;SYSTEM&apos; -RunLevel Highest -LogonType ServiceAccount
+    try {
+        Register-ScheduledTask -TaskName $Name -Action $taskAction -Trigger $taskTrigger -Principal $principal -Force -ErrorAction Stop
+        Write-Status OK &quot;Fallback Scheduled-Task created: $Name&quot;
+        return $true
+    }
+    catch {
+        Write-Status ERROR &quot;Could not create fallback Scheduled-Task: $($_.Exception.Message)&quot;
+        return $false
+    }
+}
+
+function Schedule-RebootAndContinue {
+    param([pscustomobject]$State, [string]$Reason = &quot;Script requires reboot to continue&quot;)
+    Write-Host &quot;&quot;
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Yellow
+    Write-Host &quot;  REBOOT REQUIRED&quot; -ForegroundColor Yellow
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Yellow
+    Write-Host &quot;  Reason: $Reason&quot; -ForegroundColor Yellow
+    Write-Host &quot;  The script will automatically resume after reboot.&quot; -ForegroundColor Yellow
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Yellow
+    Write-Host &quot;&quot;
+    Write-Status INFO &quot;Cleaning up driver processes before reboot...&quot;
+    Stop-DriverInstallProcesses -Silent | Out-Null
+    $State.RebootCount++
+    Set-ScriptState -State $State
+    $cmd = &quot;powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `&quot;$Script:PersistentScript`&quot;&quot;
+    $runOnceCreated = Set-RunOnceEntry -Name $Script:RunOnceName -Command $cmd
+    if (-not $runOnceCreated) {
+        $fallbackName = &quot;$($Script:RunOnceName)_Task&quot;
+        $taskCreated = Set-RunOnceTask -Name $fallbackName -ScriptPath $Script:PersistentScript
+        if (-not $taskCreated) {
+            Write-Status ERROR &quot;Unable to schedule script after reboot - manual restart required.&quot;
+        }
+    }
+    Write-Status INFO &quot;Reboot scheduled - system will restart in 15 seconds...&quot;
+    for ($i = 15; $i -ge 1; $i--) {
+        Write-Host &quot;  Rebooting in $i seconds...&quot; -ForegroundColor Yellow
+        Start-Sleep -Seconds 1
+    }
+    Write-Host &quot;&quot;
+    Write-Host &quot;  Rebooting NOW!&quot; -ForegroundColor Red
+    Write-Host &quot;&quot;
+    try { Stop-Transcript } catch { }
+    Restart-Computer -Force
+    exit 0
+}
+
+#===================================================================
+#  DRIVER INSTALLATION (single driver with timeout &amp; monitoring)
+#===================================================================
+function Install-SingleDriver {
+    param(
+        [Parameter(Mandatory)][string]$InfPath,
+        [Parameter(Mandatory)][string]$DriverName,
+        [Parameter(Mandatory)][int]$CurrentNumber,
+        [Parameter(Mandatory)][int]$TotalCount,
+        [int]$TimeoutSeconds = $Script:DriverTimeout
+    )
+    $result = [PSCustomObject]@{
+        InfPath = $InfPath; DriverName = $DriverName; Success = $false
+        ExitCode = -1; Added = $false; Installed = $false; AlreadyExists = $false
+        NeedsReboot = $false; TimedOut = $false; ProcessesKilled = 0
+        ErrorMessage = &quot;&quot;; Output = &quot;&quot;; Duration = 0
+    }
+    Write-DriverHeader -DriverName $DriverName -Current $CurrentNumber -Total $TotalCount
+    Write-Status DRIVER &quot;Path: $InfPath&quot;
+    Clear-DriverInstallEnvironment
+    Write-Status INFO &quot;Starting installation with process monitoring...&quot;
+    Write-Host &quot;&quot;
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $consoleWidth = Get-ConsoleWidth
+    $tempScript = [IO.Path]::GetTempFileName() + &quot;.ps1&quot;
+    $outFile = [IO.Path]::GetTempFileName()
+    $exitFile = [IO.Path]::GetTempFileName()
+    $wrapperContent = @&quot;
+try {
+    `$out = &amp; pnputil.exe /add-driver &quot;$InfPath&quot; /install 2&gt;&amp;1 | Out-String
+    `$out | Out-File -FilePath &quot;$outFile&quot; -Encoding UTF8
+    `$LASTEXITCODE | Out-File -FilePath &quot;$exitFile&quot; -Encoding UTF8
+} catch {
+    `$_.Exception.Message | Out-File -FilePath &quot;$outFile&quot; -Encoding UTF8
+    &quot;999&quot; | Out-File -FilePath &quot;$exitFile&quot; -Encoding UTF8
+}
+&quot;@
+    $wrapperContent | Out-File -FilePath $tempScript -Encoding UTF8
+    $proc = Start-Process -FilePath &quot;powershell.exe&quot; -ArgumentList &quot;-ExecutionPolicy Bypass -WindowStyle Hidden -File `&quot;$tempScript`&quot;&quot; -PassThru -WindowStyle Hidden
+    $frameIdx = 0
+    $frameCount = $Script:SpinnerFrames.Length
+    $animLine = 0
+    try { $animLine = [Console]::CursorTop } catch { }
+    while ((-not $proc.HasExited) -and ($stopwatch.Elapsed.TotalSeconds -lt $TimeoutSeconds)) {
+        $elapsed = $stopwatch.Elapsed.TotalSeconds
+        $remaining = [math]::Max(0, $TimeoutSeconds - $elapsed)
+        $pct = [math]::Round(($elapsed / $TimeoutSeconds) * 100)
+        $spinner = $Script:SpinnerFrames[$frameIdx % $frameCount]
+        $frameIdx++
+        $line = &quot;  $spinner $pct% | Elapsed: $([math]::Round($elapsed))s | Remaining: $([math]::Round($remaining))s&quot;
+        $padded = $line.PadRight($consoleWidth)
+        try {
+            [Console]::SetCursorPosition(0, $animLine)
+            [Console]::ForegroundColor = [ConsoleColor]::Cyan
+            [Console]::Write($padded)
+            [Console]::ResetColor()
+        }
+        catch { Write-Host &quot;`r$padded&quot; -NoNewline -ForegroundColor Cyan }
+        Start-Sleep -Milliseconds 150
+    }
+    try {
+        [Console]::SetCursorPosition(0, $animLine)
+        [Console]::Write(&apos; &apos; * $consoleWidth)
+        [Console]::SetCursorPosition(0, $animLine)
+    }
+    catch { Write-Host &quot;`r$(&apos; &apos; * $consoleWidth)`r&quot; -NoNewline }
+    $stopwatch.Stop()
+    $result.Duration = $stopwatch.Elapsed.TotalSeconds
+    if (-not $proc.HasExited) {
+        Write-Host &quot;&quot;
+        Write-Status SKIP &quot;TIMEOUT after $(Format-Duration $TimeoutSeconds)!&quot;
+        try { $proc.Kill() } catch { }
+        $result.TimedOut = $true
+        $result.ErrorMessage = &quot;Timeout after $TimeoutSeconds seconds&quot;
+        $killed = Stop-DriverInstallProcesses
+        $result.ProcessesKilled = $killed
+        Write-Status KILL &quot;Terminated $killed driver-process(es)&quot;
+        $null = Wait-ForDriverProcesses -TimeoutSeconds 10
+        Remove-Item $tempScript, $outFile, $exitFile -Force -ErrorAction SilentlyContinue
+        Write-Status TIME &quot;Time spent: $(Format-Duration $result.Duration) (TIMEOUT)&quot;
+        if ($Script:CooldownSeconds -gt 0) { Start-Sleep -Seconds $Script:CooldownSeconds }
+        Write-Host &quot;&quot;
+        return $result
+    }
+    $out = &quot;&quot;
+    $exit = -1
+    if (Test-Path $outFile) { $out = Get-Content $outFile -Raw -ErrorAction SilentlyContinue }
+    if (Test-Path $exitFile) {
+        $raw = Get-Content $exitFile -Raw -ErrorAction SilentlyContinue
+        if ($null -ne $raw) { [int]::TryParse($raw.Trim(), [ref]$exit) | Out-Null }
+    }
+    Remove-Item $tempScript, $outFile, $exitFile -Force -ErrorAction SilentlyContinue
+    $result.ExitCode = $exit
+    $result.Output = $out
+    if ($null -ne $out) {
+        if ($out -match &apos;added|successfully added|driver package added&apos;) {
+            $result.Added = $true; Write-Status OK &quot;Driver added to store&quot;
+        }
+        if ($out -match &apos;install.*device|installed to device&apos;) {
+            $result.Installed = $true; Write-Status OK &quot;Driver installed on device&quot;
+        }
+        if ($out -match &apos;already exists|up to date&apos;) {
+            $result.AlreadyExists = $true; Write-Status INFO &quot;Driver already up-to-date&quot;
+        }
+        if ($out -match &apos;reboot|restart&apos;) {
+            $result.NeedsReboot = $true; Write-Status WARN &quot;Reboot required (output)&quot;
+        }
+    }
+    switch ($exit) {
+        0    { $result.Success = $true; Write-Status OK &quot;Exit code 0 - Success&quot; }
+        1    { $result.Success = $true; Write-Status INFO &quot;Exit code 1 - Success with warnings&quot; }
+        259  { $result.Success = $true; Write-Status INFO &quot;Exit code 259 - staged (no matching device)&quot; }
+        3010 { $result.Success = $true; $result.NeedsReboot = $true; Write-Status WARN &quot;Exit code 3010 - Reboot required&quot; }
+        482  { $result.Success = $true; $result.NeedsReboot = $true; Write-Status WARN &quot;Exit code 482 - Partial success, reboot needed&quot; }
+        default {
+            if ($exit -ge 0) {
+                if ($result.Added -or $result.Installed -or $result.AlreadyExists) {
+                    $result.Success = $true; Write-Status INFO &quot;Exit code $exit - driver processed&quot;
+                }
+                else {
+                    $result.Success = $false; $result.ErrorMessage = &quot;Exit code $exit&quot;
+                    Write-Status ERROR &quot;Exit code $exit - failure&quot;
+                }
+            }
+            else { $result.Success = $true; Write-Status WARN &quot;Unable to determine exit code&quot; }
+        }
+    }
+    Write-Status TIME &quot;Time taken: $(Format-Duration $result.Duration)&quot;
+    if ($Script:CooldownSeconds -gt 0) { Start-Sleep -Seconds $Script:CooldownSeconds }
+    return $result
+}
+
+#===================================================================
+#  PHASE-0: VENTOY OFFLINE DRIVER INSTALLATION
+#===================================================================
+function Install-VentoyDrivers {
+    param([string[]]$FolderCandidates = @(&apos;DriversOS&apos;,&apos;Drivers&apos;), [pscustomobject]$State)
+    Write-Banner &quot;PHASE-0: VENTOY OFFLINE DRIVER INSTALLATION&quot;
+    Write-Status INFO &quot;Performing initial cleanup...&quot;
+    Clear-DriverInstallEnvironment
+    $log = Join-Path $env:WINDIR &apos;Temp\InstallVentoyDrivers.log&apos;
+    &quot;=== Install-VentoyDrivers start $(Get-Date) ===&quot; | Out-File $log -Encoding UTF8 -Append
+    $result = [PSCustomObject]@{
+        Success = $false; NeedsReboot = $false; NotFound = $false
+        TotalFound = 0; TotalMatched = 0; TotalSkippedNoMatch = 0
+        TotalAdded = 0; TotalInstalled = 0; TotalFailed = 0; TotalSkipped = 0
+        TotalAlreadyExist = 0; TotalTimedOut = 0; TotalTime = 0; TotalKilled = 0
+    }
+    $root = $null
+    if ($State.VentoyDriverRoot -and (Test-Path $State.VentoyDriverRoot)) {
+        $root = $State.VentoyDriverRoot
+        Write-Status OK &quot;Using saved driver root: $root&quot;
+    }
+    else {
+        $driveLetters = @(&apos;D&apos;,&apos;E&apos;,&apos;F&apos;,&apos;G&apos;,&apos;H&apos;,&apos;I&apos;,&apos;J&apos;,&apos;K&apos;,&apos;L&apos;,&apos;M&apos;,&apos;N&apos;,&apos;O&apos;,&apos;P&apos;,&apos;Q&apos;,&apos;R&apos;,&apos;S&apos;,&apos;T&apos;,&apos;U&apos;,&apos;V&apos;,&apos;W&apos;,&apos;X&apos;,&apos;Y&apos;,&apos;Z&apos;)
+        foreach ($drive in $driveLetters) {
+            foreach ($folder in $FolderCandidates) {
+                $candidate = &quot;${drive}:\$folder&quot;
+                if (Test-Path $candidate) { $root = $candidate; Write-Status OK &quot;Found driver folder: $root&quot;; break }
+            }
+            if ($null -ne $root) { break }
+        }
+    }
+    if ($null -eq $root) {
+        Write-Status INFO &quot;No Ventoy driver folder found.&quot;
+        $result.NotFound = $true; $result.Success = $true; return $result
+    }
+    $State.VentoyDriverRoot = $root; Set-ScriptState -State $State
+    $allInfFiles = @(Get-ChildItem -Path $root -Filter &quot;*.inf&quot; -Recurse -File -ErrorAction SilentlyContinue | Sort-Object FullName)
+    $totalFound = ($allInfFiles | Measure-Object).Count
+    if ($totalFound -eq 0) {
+        Write-Status WARN &quot;No .inf files discovered.&quot;
+        $result.NotFound = $true; $result.Success = $true; return $result
+    }
+    $result.TotalFound = $totalFound
+    Write-Status OK &quot;Found $totalFound INF file(s) in driver folder.&quot;
+    $processed = @()
+    if ($State.VentoyProcessedDrivers) { $processed = @($State.VentoyProcessedDrivers) }
+    $processedCount = ($processed | Measure-Object).Count
+    if ($processedCount -gt 0) { Write-Status INFO &quot;$processedCount driver(s) already processed.&quot; }
+    Write-SubBanner &quot;Scanning System Devices&quot;
+    $scanSw = [System.Diagnostics.Stopwatch]::StartNew()
+    $systemIds = Get-SystemDeviceIds
+    $scanSw.Stop()
+    Write-Status TIME &quot;Device scan took $(Format-Duration $scanSw.Elapsed.TotalSeconds)&quot;
+    Write-SubBanner &quot;Matching Drivers to System Devices&quot;
+    $matchSw = [System.Diagnostics.Stopwatch]::StartNew()
+    $matchedInfs = [System.Collections.ArrayList]::new()
+    $skippedNoMatch = [System.Collections.ArrayList]::new()
+    $fallbackMode = $false
+    if ($systemIds.Count -eq 0) {
+        Write-Status WARN &quot;Could not enumerate any device IDs - installing ALL drivers as fallback.&quot;
+        $fallbackMode = $true
+        foreach ($inf in $allInfFiles) { [void]$matchedInfs.Add($inf) }
+    }
+    else {
+        foreach ($inf in $allInfFiles) {
+            $rel = $inf.FullName.Substring($root.Length + 1)
+            if ($rel -in $processed) { continue }
+            $isMatch = Test-InfMatchesSystem -InfPath $inf.FullName -SystemIds $systemIds
+            if ($isMatch) { [void]$matchedInfs.Add($inf) }
+            else { [void]$skippedNoMatch.Add($inf); Write-Status SKIP &quot;No matching device: $rel&quot; }
+        }
+    }
+    $matchSw.Stop()
+    $matchedCount = ($matchedInfs | Measure-Object).Count
+    $skippedNoMatchCount = ($skippedNoMatch | Measure-Object).Count
+    $result.TotalMatched = $matchedCount
+    $result.TotalSkippedNoMatch = $skippedNoMatchCount
+    Write-Host &quot;&quot;
+    Write-Host &quot;  ======================================================================&quot; -ForegroundColor DarkCyan
+    Write-Host &quot;                     DRIVER MATCHING RESULTS&quot; -ForegroundColor Cyan
+    Write-Host &quot;  ======================================================================&quot; -ForegroundColor DarkCyan
+    Write-Host &quot;  Total INF files found:        $totalFound&quot; -ForegroundColor White
+    Write-Host &quot;  Already processed:            $processedCount&quot; -ForegroundColor DarkGray
+    Write-Host &quot;  Matched to system devices:    $matchedCount&quot; -ForegroundColor Green
+    Write-Host &quot;  Skipped (no matching device): $skippedNoMatchCount&quot; -ForegroundColor Yellow
+    Write-Host &quot;  Matching time:                $(Format-Duration $matchSw.Elapsed.TotalSeconds)&quot; -ForegroundColor DarkGray
+    $modeLabel = if ($fallbackMode) { &quot;FALLBACK (all drivers)&quot; } else { &quot;TARGETED (matched only)&quot; }
+    $modeColor = if ($fallbackMode) { &apos;Red&apos; } else { &apos;Green&apos; }
+    Write-Host &quot;  Mode:                         $modeLabel&quot; -ForegroundColor $modeColor
+    Write-Host &quot;  ======================================================================&quot; -ForegroundColor DarkCyan
+    Write-Host &quot;&quot;
+    if ($matchedCount -eq 0) {
+        Write-Status OK &quot;No new drivers to install.&quot;
+        $result.Success = $true; return $result
+    }
+    $overallSw = [System.Diagnostics.Stopwatch]::StartNew()
+    $globalReboot = $false
+    $i = 0
+    Write-SubBanner &quot;Installing $matchedCount Matched Driver(s)&quot;
+    foreach ($inf in $matchedInfs) {
+        $i++
+        $rel = $inf.FullName.Substring($root.Length + 1)
+        if ($rel -in $processed) { continue }
+        $drvResult = Install-SingleDriver -InfPath $inf.FullName -DriverName $rel -CurrentNumber $i -TotalCount $matchedCount
+        $result.TotalTime += $drvResult.Duration
+        $result.TotalKilled += $drvResult.ProcessesKilled
+        if ($drvResult.TimedOut) { $result.TotalTimedOut++ }
+        elseif ($drvResult.Added) { $result.TotalAdded++ }
+        if ($drvResult.Installed) { $result.TotalInstalled++ }
+        if ($drvResult.AlreadyExists) { $result.TotalAlreadyExist++ }
+        if ((-not $drvResult.Success) -and (-not $drvResult.TimedOut)) { $result.TotalFailed++ }
+        if ($drvResult.NeedsReboot) { $globalReboot = $true }
+        $processed += $rel
+        $State.VentoyProcessedDrivers = $processed
+        $State.TotalDriversAdded = $result.TotalAdded
+        $State.TotalDriversInstalled = $result.TotalInstalled
+        $State.TotalDriversFailed = $result.TotalFailed
+        $State.TotalDriversSkipped = $result.TotalSkippedNoMatch
+        $State.TotalDriversTimedOut = $result.TotalTimedOut
+        $State.TotalTimeSpent = $result.TotalTime
+        $State.TotalProcessesKilled = $result.TotalKilled
+        Set-ScriptState -State $State
+    }
+    $overallSw.Stop()
+    $failColor = if ($result.TotalFailed -gt 0) { &apos;Red&apos; } else { &apos;Green&apos; }
+    $timeoutColor = if ($result.TotalTimedOut -gt 0) { &apos;Yellow&apos; } else { &apos;Green&apos; }
+    $killColor = if ($result.TotalKilled -gt 0) { &apos;Yellow&apos; } else { &apos;Green&apos; }
+    $rebootColor = if ($globalReboot) { &apos;Yellow&apos; } else { &apos;Green&apos; }
+    Write-Host &quot;&quot;
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Green
+    Write-Host &quot;               VENTOY DRIVER INSTALLATION SUMMARY&quot; -ForegroundColor Green
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Green
+    Write-Host &quot;  Total INFs found:       $($result.TotalFound)&quot; -ForegroundColor White
+    Write-Host &quot;  Matched to devices:     $($result.TotalMatched)&quot; -ForegroundColor Green
+    Write-Host &quot;  Skipped (no match):     $($result.TotalSkippedNoMatch)&quot; -ForegroundColor Yellow
+    Write-Host &quot;  Added to store:         $($result.TotalAdded)&quot; -ForegroundColor Green
+    Write-Host &quot;  Installed on hardware:  $($result.TotalInstalled)&quot; -ForegroundColor Green
+    Write-Host &quot;  Already up-to-date:     $($result.TotalAlreadyExist)&quot; -ForegroundColor Cyan
+    Write-Host &quot;  Failed:                 $($result.TotalFailed)&quot; -ForegroundColor $failColor
+    Write-Host &quot;  Timed out:              $($result.TotalTimedOut)&quot; -ForegroundColor $timeoutColor
+    Write-Host &quot;  Processes killed:       $($result.TotalKilled)&quot; -ForegroundColor $killColor
+    Write-Host &quot;  Total install time:     $(Format-Duration $overallSw.Elapsed.TotalSeconds)&quot; -ForegroundColor Magenta
+    Write-Host &quot;  Reboot required:        $globalReboot&quot; -ForegroundColor $rebootColor
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Green
+    Write-Host &quot;&quot;
+    $result.Success = $true
+    $result.NeedsReboot = $globalReboot
+    return $result
+}
+
+#===================================================================
+#  INTERNET CONNECTIVITY CHECK
+#===================================================================
+function Test-InternetConnectivity {
+    param([int]$MaxRetries = 15, [int]$RetryDelay = 10)
+    Write-Banner &quot;CHECKING INTERNET CONNECTIVITY&quot;
+    $w = Get-ConsoleWidth
+    $totalFrames = $Script:SpinnerFrames.Length
+    for ($i = 1; $i -le $MaxRetries; $i++) {
+        Write-Status PROGRESS &quot;Attempt $i of $MaxRetries...&quot;
+        try {
+            $r = Invoke-WebRequest -Uri &quot;https://www.google.com&quot; -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
+            if ($r.StatusCode -eq 200) { Write-Status OK &quot;Internet reachable.&quot;; return $true }
+        }
+        catch {
+            Write-Status WARN &quot;Attempt $i failed: $($_.Exception.Message)&quot;
+            if ($i -lt $MaxRetries) {
+                Write-Status INFO &quot;Retrying in $RetryDelay seconds...&quot;
+                for ($s = $RetryDelay; $s -ge 1; $s--) {
+                    $spinner = $Script:SpinnerFrames[($RetryDelay - $s) % $totalFrames]
+                    $line = &quot;  $spinner Waiting $s sec...&quot;
+                    $pad = $line.PadRight($w)
+                    try {
+                        [Console]::SetCursorPosition(0, [Console]::CursorTop)
+                        [Console]::ForegroundColor = [ConsoleColor]::DarkGray
+                        [Console]::Write($pad)
+                        [Console]::ResetColor()
+                    }
+                    catch { Write-Host &quot;`r$pad&quot; -NoNewline -ForegroundColor DarkGray }
+                    Start-Sleep -Seconds 1
+                }
+            }
+        }
+    }
+    Write-Status ERROR &quot;No internet after $MaxRetries attempts.&quot;
+    return $false
+}
+
+#===================================================================
+#  MANUFACTURER DETECTION
+#===================================================================
+function Get-SystemManufacturer {
+    Write-SubBanner &quot;Detecting System Manufacturer&quot;
+    $cs = Get-CimInstance Win32_ComputerSystem
+    $man = $cs.Manufacturer.Trim()
+    $mod = $cs.Model.Trim()
+    Write-Status INFO &quot;Manufacturer: $man&quot;
+    Write-Status INFO &quot;Model:        $mod&quot;
+    return $man
+}
+
+#===================================================================
+#  CHOCOLATEY INSTALL + SOURCE CONFIGURATION
+#===================================================================
+function Set-ChocolateySource {
+    Write-SubBanner &quot;Configuring Chocolatey Sources&quot;
+    $chocoExe = Get-ChocoExePath
+    if (-not $chocoExe) {
+        Write-Status ERROR &quot;Chocolatey executable not found - cannot configure sources.&quot;
+        return
+    }
+
+    # Check if source exists
+    Write-Status INFO &quot;Checking existing Chocolatey sources...&quot;
+    $listExit = Invoke-CommandVerbose -FilePath $chocoExe -Arguments &quot;source list&quot; -Label &quot;CHOCO&quot;
+
+    # Try adding the custom source
+    Write-Status INFO &quot;Adding custom source: $($Script:ChocoSourceName) -&gt; $($Script:ChocoSourceUrl)&quot;
+    $addExit = Invoke-CommandVerbose -FilePath $chocoExe -Arguments &quot;source add -n `&quot;$($Script:ChocoSourceName)`&quot; -s `&quot;$($Script:ChocoSourceUrl)`&quot; --priority=1 --allow-self-service&quot; -Label &quot;CHOCO&quot;
+    if ($addExit -eq 0) {
+        Write-Status OK &quot;Custom source &apos;$($Script:ChocoSourceName)&apos; configured.&quot;
+    }
+    else {
+        Write-Status WARN &quot;Source add returned exit code $addExit (may already exist - OK).&quot;
+    }
+
+    # Disable default community source
+    Write-Status INFO &quot;Disabling default Chocolatey community source...&quot;
+    $disableExit = Invoke-CommandVerbose -FilePath $chocoExe -Arguments &quot;source disable -n `&quot;chocolatey`&quot;&quot; -Label &quot;CHOCO&quot;
+    if ($disableExit -eq 0) {
+        Write-Status OK &quot;Default community source disabled.&quot;
+    }
+    else {
+        Write-Status WARN &quot;Could not disable default source (may not exist).&quot;
+    }
+
+    # Verify final state
+    Write-Status INFO &quot;Final source configuration:&quot;
+    $null = Invoke-CommandVerbose -FilePath $chocoExe -Arguments &quot;source list&quot; -Label &quot;CHOCO&quot;
+}
+
+function Install-ChocolateyIfNeeded {
+    Write-SubBanner &quot;Ensuring Chocolatey&quot;
+    if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+        Write-Status INFO &quot;Chocolatey not present - installing...&quot;
+        Write-Host &quot;&quot;
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 3072
+        Invoke-Expression (Invoke-RestMethod https://community.chocolatey.org/install.ps1)
+        $env:Path = [System.Environment]::GetEnvironmentVariable(&apos;Path&apos;, &apos;Machine&apos;) + &apos;;&apos; + [System.Environment]::GetEnvironmentVariable(&apos;Path&apos;, &apos;User&apos;)
+        Write-Host &quot;&quot;
+        Write-Status OK &quot;Chocolatey installed.&quot;
+    }
+    else {
+        Write-Status OK &quot;Chocolatey already installed.&quot;
+    }
+    Set-ChocolateySource
+}
+
+function Install-ChocoPackage {
+    &lt;#
+    .SYNOPSIS
+        Installs a chocolatey package using Invoke-CommandVerbose so every line
+        of choco output (download progress, install steps, etc.) is visible.
+    #&gt;
+    param(
+        [Parameter(Mandatory)][string]$PackageName,
+        [string]$DisplayName
+    )
+    if (-not $DisplayName) { $DisplayName = $PackageName }
+    $chocoExe = Get-ChocoExePath
+    if (-not $chocoExe) {
+        Write-Status ERROR &quot;Chocolatey executable not found.&quot;
+        return $false
+    }
+
+    Write-SubBanner &quot;Installing $DisplayName via Chocolatey&quot;
+    Write-Status INFO &quot;Source: $($Script:ChocoSourceName) ($($Script:ChocoSourceUrl))&quot;
+    Write-Host &quot;&quot;
+
+    # Try custom source first
+    $chocoArgs = &quot;install $PackageName -y --source=`&quot;$($Script:ChocoSourceName)`&quot;&quot;
+    $exitCode = Invoke-CommandVerbose -FilePath $chocoExe -Arguments $chocoArgs -Label &quot;CHOCO&quot;
+
+    if ($exitCode -ne 0) {
+        Write-Status WARN &quot;Install from custom source returned $exitCode - trying default sources...&quot;
+        $chocoArgs = &quot;install $PackageName -y&quot;
+        $exitCode = Invoke-CommandVerbose -FilePath $chocoExe -Arguments $chocoArgs -Label &quot;CHOCO&quot;
+    }
+
+    if ($exitCode -eq 0) {
+        Write-Status OK &quot;$DisplayName installed successfully.&quot;
+        return $true
+    }
+    else {
+        Write-Status ERROR &quot;$DisplayName installation failed (exit $exitCode).&quot;
+        return $false
+    }
+}
+
+#===================================================================
+#  DELL UPDATE LOGIC  (fully verbose - no spinners)
+#===================================================================
+function Invoke-DellUpdates {
+    param([pscustomobject]$State)
+    Write-Banner &quot;DELL SYSTEM UPDATE&quot;
+
+    # Locate dcu-cli.exe
+    $cli = @(
+        &apos;C:\Program Files\Dell\CommandUpdate\dcu-cli.exe&apos;,
+        &apos;C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe&apos;
+    ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+    if (-not $cli) {
+        $installed = Install-ChocoPackage -PackageName &quot;dellcommandupdate&quot; -DisplayName &quot;Dell Command Update&quot;
+        if ($installed) { Start-Sleep -Seconds 5 }
+        $cli = @(
+            &apos;C:\Program Files\Dell\CommandUpdate\dcu-cli.exe&apos;,
+            &apos;C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe&apos;
+        ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+    }
+
+    if (-not $cli) {
+        Write-Status ERROR &quot;Dell Command Update CLI still missing - aborting Dell section.&quot;
+        return $false
+    }
+
+    Write-Status OK &quot;Dell CLI located: $cli&quot;
+    Write-Host &quot;&quot;
+
+    switch ($State.ManufacturerPhase) {
+        0 {
+            # --- Phase-0: Advanced Driver Restore ---
+            if ($State.DellADRFailed) {
+                Write-Status WARN &quot;ADR previously failed - skipping to phase-2.&quot;
+                $State.ManufacturerPhase = 2
+                Set-ScriptState -State $State
+                return (Invoke-DellUpdates -State $State)
+            }
+
+            Write-SubBanner &quot;Dell Phase-0: Configuring ADR&quot;
+            Write-Status INFO &quot;Enabling Advanced Driver Restore...&quot;
+            $configExit = Invoke-CommandVerbose -FilePath $cli -Arguments &quot;/configure -advancedDriverRestore=enable&quot; -Label &quot;DCU-CFG&quot;
+            Write-Host &quot;&quot;
+
+            Write-SubBanner &quot;Dell Phase-0: ADR Driver Install&quot;
+            Write-Status STEP &quot;This will download and install drivers matching your Dell system.&quot;
+            Write-Status STEP &quot;All progress and driver names will be displayed below.&quot;
+            Write-Host &quot;&quot;
+            $dellExit = Invoke-CommandVerbose -FilePath $cli -Arguments &quot;/driverinstall&quot; -Label &quot;DCU&quot;
+
+            switch ($dellExit) {
+                0 {
+                    Write-Status OK &quot;ADR driver install succeeded.&quot;
+                    $State.ManufacturerPhase = 2
+                    Set-ScriptState -State $State
+                    return (Invoke-DellUpdates -State $State)
+                }
+                1 {
+                    Write-Status WARN &quot;Drivers installed - reboot required.&quot;
+                    $State.ManufacturerPhase = 1
+                    Schedule-RebootAndContinue -State $State -Reason &quot;Dell ADR driver install (exit 1) requires reboot&quot;
+                }
+                5 {
+                    Write-Status WARN &quot;Reboot required to complete operation.&quot;
+                    $State.ManufacturerPhase = 1
+                    Schedule-RebootAndContinue -State $State -Reason &quot;Dell ADR driver install (exit 5) requires reboot&quot;
+                }
+                2 {
+                    Write-Status ERROR &quot;ADR crashed - marking as failed, skipping to updates.&quot;
+                    $State.DellADRFailed = $true
+                    $State.ManufacturerPhase = 2
+                    Set-ScriptState -State $State
+                    return (Invoke-DellUpdates -State $State)
+                }
+                3 {
+                    Write-Status OK &quot;All drivers already up to date.&quot;
+                    $State.ManufacturerPhase = 2
+                    Set-ScriptState -State $State
+                    return (Invoke-DellUpdates -State $State)
+                }
+                default {
+                    Write-Status ERROR &quot;ADR returned $dellExit - skipping to phase-2.&quot;
+                    $State.DellADRFailed = $true
+                    $State.ManufacturerPhase = 2
+                    Set-ScriptState -State $State
+                    return (Invoke-DellUpdates -State $State)
+                }
+            }
+        }
+        1 {
+            # --- Phase-1: Post-reboot scan ---
+            Write-SubBanner &quot;Dell Phase-1: Post-Reboot Scan&quot;
+            Write-Status INFO &quot;Scanning for remaining Dell drivers after reboot...&quot;
+            Write-Host &quot;&quot;
+            $null = Invoke-CommandVerbose -FilePath $cli -Arguments &quot;/scan&quot; -Label &quot;DCU&quot;
+            $State.ManufacturerPhase = 2
+            Set-ScriptState -State $State
+            return (Invoke-DellUpdates -State $State)
+        }
+        2 {
+            # --- Phase-2: Apply all updates ---
+            Write-SubBanner &quot;Dell Phase-2: Apply BIOS / Firmware / Driver Updates&quot;
+            Write-Status STEP &quot;Downloading and installing all available Dell updates.&quot;
+            Write-Status STEP &quot;Each update name, download progress, and install status shown below.&quot;
+            Write-Host &quot;&quot;
+            $dellExit = Invoke-CommandVerbose -FilePath $cli -Arguments &quot;/applyupdates -forceUpdate=enable -autoSuspendBitLocker=enable&quot; -Label &quot;DCU&quot;
+
+            switch ($dellExit) {
+                0 {
+                    Write-Status OK &quot;All Dell updates applied successfully.&quot;
+                    $State.ManufacturerPhase = 3
+                    Set-ScriptState -State $State
+                    return $true
+                }
+                1 {
+                    Write-Status WARN &quot;Updates applied - reboot required.&quot;
+                    $State.ManufacturerPhase = 3
+                    Schedule-RebootAndContinue -State $State -Reason &quot;Dell updates (exit 1) require reboot&quot;
+                }
+                5 {
+                    Write-Status WARN &quot;Reboot required to finish updates.&quot;
+                    $State.ManufacturerPhase = 3
+                    Schedule-RebootAndContinue -State $State -Reason &quot;Dell updates (exit 5) require reboot&quot;
+                }
+                3 {
+                    Write-Status OK &quot;System already up to date.&quot;
+                    $State.ManufacturerPhase = 3
+                    Set-ScriptState -State $State
+                    return $true
+                }
+                default {
+                    Write-Status WARN &quot;Apply-updates returned $dellExit - continuing.&quot;
+                    $State.ManufacturerPhase = 3
+                    Set-ScriptState -State $State
+                    return $true
+                }
+            }
+        }
+        default {
+            Write-Status OK &quot;Dell updates already completed.&quot;
+            return $true
+        }
+    }
+    return $true
+}
+
+#===================================================================
+#  HP UPDATE LOGIC  (fully verbose - no spinners)
+#===================================================================
+function Invoke-HPUpdates {
+    param([pscustomobject]$State)
+    Write-Banner &quot;HP SYSTEM UPDATE&quot;
+
+    $hpiaPaths = @(
+        &apos;C:\HP\HPIA\HPImageAssistant.exe&apos;,
+        &apos;C:\Program Files\HP\HPIA\HPImageAssistant.exe&apos;,
+        &apos;C:\Program Files (x86)\HP\HPIA\HPImageAssistant.exe&apos;
+    )
+    $hpia = $hpiaPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+    if (-not $hpia) {
+        $installed = Install-ChocoPackage -PackageName &quot;hpimageassistant&quot; -DisplayName &quot;HP Image Assistant&quot;
+        if ($installed) { Start-Sleep -Seconds 5 }
+        $hpia = $hpiaPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+    }
+
+    if (-not $hpia) {
+        Write-Status ERROR &quot;HP Image Assistant still missing - aborting HP section.&quot;
+        return $false
+    }
+
+    Write-Status OK &quot;HP Image Assistant located: $hpia&quot;
+    Write-Host &quot;&quot;
+
+    Write-SubBanner &quot;HP Image Assistant: Analyze &amp; Install All Updates&quot;
+    Write-Status STEP &quot;Scanning for BIOS, firmware, driver, and software updates.&quot;
+    Write-Status STEP &quot;Each update name and install progress will be displayed below.&quot;
+    Write-Host &quot;&quot;
+
+    $hpiaArgs = &quot;/Operation:Analyze /Action:Install /Selection:All /Silent /Noninteractive /ReportFolder:C:\Temp\HPIA&quot;
+    $hpExit = Invoke-CommandVerbose -FilePath $hpia -Arguments $hpiaArgs -Label &quot;HPIA&quot;
+
+    switch ($hpExit) {
+        0    { Write-Status OK &quot;HP updates completed successfully.&quot;; return $true }
+        256  { Write-Status WARN &quot;HP updates require reboot (exit $hpExit).&quot;; return $true }
+        3010 { Write-Status WARN &quot;HP updates require reboot (exit $hpExit).&quot;; return $true }
+        default {
+            Write-Status WARN &quot;HP updates returned $hpExit - continuing.&quot;
+            return $true
+        }
+    }
+}
+
+#===================================================================
+#  MAIN EXECUTION
+#===================================================================
+try {
+    if (-not (Initialize-PersistentScript)) {
+        throw &quot;Failed to initialise persistent script.&quot;
+    }
+    Start-Transcript -Path $Script:LogFile -Append -Force
+    Write-Host &quot;&quot;
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Cyan
+    Write-Host &quot;       DRIVER UPDATE SCRIPT - PowerShell $($PSVersionTable.PSVersion)&quot; -ForegroundColor Cyan
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Cyan
+    Write-Host &quot;  User:       $env:USERNAME&quot; -ForegroundColor Cyan
+    Write-Host &quot;  Computer:   $env:COMPUTERNAME&quot; -ForegroundColor Cyan
+    Write-Host &quot;  PID:        $PID&quot; -ForegroundColor Cyan
+    Write-Host &quot;  Time:       $(Get-Date -Format &apos;yyyy-MM-dd HH:mm:ss&apos;)&quot; -ForegroundColor Cyan
+    Write-Host &quot;  Script:     $Script:PersistentScript&quot; -ForegroundColor Cyan
+    Write-Host &quot;  Timeout:    $Script:DriverTimeout seconds per driver&quot; -ForegroundColor Cyan
+    Write-Host &quot;  ChocoSrc:   $Script:ChocoSourceName -&gt; $Script:ChocoSourceUrl&quot; -ForegroundColor Cyan
+    Write-Host &quot;  Mode:       TARGETED (device-matched) + VERBOSE output&quot; -ForegroundColor Cyan
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Cyan
+    Write-Host &quot;&quot;
+    Write-Status INFO &quot;Checking for orphan driver processes...&quot;
+    $orphanKilled = Stop-DriverInstallProcesses -Silent
+    if ($orphanKilled -gt 0) {
+        Write-Status WARN &quot;Terminated $orphanKilled leftover processes.&quot;
+        Start-Sleep -Seconds 2
+    }
+    $state = Get-ScriptState
+    Write-Host &quot;----------------------------------------------------------------------&quot; -ForegroundColor DarkGray
+    Write-Host &quot;  CURRENT STATE&quot; -ForegroundColor DarkGray
+    Write-Host &quot;----------------------------------------------------------------------&quot; -ForegroundColor DarkGray
+    foreach ($prop in $state.PSObject.Properties) {
+        Write-Host (&quot;  {0,-25}: {1}&quot; -f $prop.Name, $prop.Value) -ForegroundColor DarkGray
+    }
+    Write-Host &quot;----------------------------------------------------------------------&quot; -ForegroundColor DarkGray
+    Write-Host &quot;&quot;
+
+    # PHASE-0: Ventoy offline drivers
+    if ($state.Phase -eq 0) {
+        if (-not $state.VentoyCompleted) {
+            $ventoyResult = Install-VentoyDrivers -State $state
+            $state.TotalDriversAdded = $ventoyResult.TotalAdded
+            $state.TotalDriversInstalled = $ventoyResult.TotalInstalled
+            $state.TotalDriversSkipped = $ventoyResult.TotalSkippedNoMatch
+            $state.TotalDriversTimedOut = $ventoyResult.TotalTimedOut
+            $state.TotalProcessesKilled = $ventoyResult.TotalKilled
+            $state.TotalTimeSpent = $ventoyResult.TotalTime
+            if ($ventoyResult.NotFound) {
+                Write-Status INFO &quot;No Ventoy drivers - moving to online phase.&quot;
+                $state.VentoyCompleted = $true; $state.Phase = 1
+                Set-ScriptState -State $state
+            }
+            elseif ($ventoyResult.NeedsReboot) {
+                Write-Status STEP &quot;Ventoy driver install requires reboot.&quot;
+                $state.VentoyCompleted = $true; $state.VentoyRebootDone = $false
+                Set-ScriptState -State $state
+                Schedule-RebootAndContinue -State $state -Reason &quot;Ventoy driver install - reboot required&quot;
+            }
+            else {
+                Write-Status OK &quot;Ventoy drivers installed - no reboot needed.&quot;
+                $state.VentoyCompleted = $true; $state.Phase = 1
+                Set-ScriptState -State $state
+            }
+        }
+        else {
+            Write-Status OK &quot;Post-reboot: Ventoy driver installation finalized.&quot;
+            $state.VentoyRebootDone = $true; $state.Phase = 1
+            Set-ScriptState -State $state
+        }
+    }
+
+    # PHASE-1: Online updates
+    if ($state.Phase -ge 1) {
+        Write-Banner &quot;PHASE 1: ONLINE UPDATES&quot;
+        if (-not (Test-InternetConnectivity -MaxRetries 15 -RetryDelay 10)) {
+            Write-Status ERROR &quot;No internet - cannot continue.&quot;
+            Write-Status INFO &quot;Connect to a network and re-run the script.&quot;
+            try { Stop-Transcript } catch { }
+            exit 1
+        }
+        Install-ChocolateyIfNeeded
+        $manufacturer = Get-SystemManufacturer
+        if ($manufacturer -like &apos;*Dell*&apos;) {
+            Invoke-DellUpdates -State $state | Out-Null
+        }
+        elseif ($manufacturer -match &apos;HP|Hewlett[-\s]?Packard&apos;) {
+            Invoke-HPUpdates -State $state | Out-Null
+        }
+        else {
+            Write-Status WARN &quot;Unsupported manufacturer: $manufacturer - only Dell and HP are handled.&quot;
+        }
+    }
+
+    # FINAL CLEAN-UP
+    Write-Status INFO &quot;Final clean-up - terminating any remaining driver processes.&quot;
+    Stop-DriverInstallProcesses -Silent | Out-Null
+    Write-Host &quot;&quot;
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Green
+    Write-Host &quot;      DRIVER UPDATE SCRIPT COMPLETED SUCCESSFULLY!&quot; -ForegroundColor Green
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Green
+    Write-Host &quot;&quot;
+    Write-Host &quot;  Total reboots:          $($state.RebootCount)&quot; -ForegroundColor White
+    Write-Host &quot;  Drivers added:          $($state.TotalDriversAdded)&quot; -ForegroundColor White
+    Write-Host &quot;  Drivers installed:      $($state.TotalDriversInstalled)&quot; -ForegroundColor White
+    Write-Host &quot;  Drivers skipped:        $($state.TotalDriversSkipped)&quot; -ForegroundColor White
+    Write-Host &quot;  Drivers failed:         $($state.TotalDriversFailed)&quot; -ForegroundColor White
+    Write-Host &quot;  Drivers timed out:      $($state.TotalDriversTimedOut)&quot; -ForegroundColor White
+    Write-Host &quot;  Processes killed:       $($state.TotalProcessesKilled)&quot; -ForegroundColor White
+    Write-Host &quot;  Total time spent:       $(Format-Duration $state.TotalTimeSpent)&quot; -ForegroundColor White
+    Write-Host &quot;  Dell ADR failed:        $($state.DellADRFailed)&quot; -ForegroundColor White
+    Write-Host &quot;  Choco source:           $($Script:ChocoSourceName)&quot; -ForegroundColor White
+    Write-Host &quot;&quot;
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Green
+    Write-Host &quot;&quot;
+    Remove-ScriptState
+}
+catch {
+    Write-Host &quot;&quot;
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Red
+    Write-Host &quot;  SCRIPT ERROR&quot; -ForegroundColor Red
+    Write-Host &quot;======================================================================&quot; -ForegroundColor Red
+    Write-Status ERROR &quot;Message: $($_.Exception.Message)&quot;
+    Write-Status ERROR &quot;Line:    $($_.InvocationInfo.ScriptLineNumber)&quot;
+    Write-Host $_.ScriptStackTrace -ForegroundColor Red
+    Write-Host &quot;&quot;
+    Write-Status INFO &quot;Attempting emergency clean-up...&quot;
+    try {
+        $saveEA = $ErrorActionPreference
+        $ErrorActionPreference = &apos;SilentlyContinue&apos;
+        Stop-DriverInstallProcesses -Silent | Out-Null
+        $ErrorActionPreference = $saveEA
+    }
+    catch { try { $ErrorActionPreference = $saveEA } catch { } }
+    Write-Status INFO &quot;State file kept - re-run script to continue.&quot;
+}
+finally {
+    try { Stop-Transcript } catch { }
+}
+		</File>
+		<File path="C:\Windows\Setup\Scripts\unattend-02.cmd">
+powershell.exe -noexit -ExecutionPolicy Bypass "&amp; "c:\windows\temp\header.ps1""
+		</File>
+		<File path="C:\Windows\Setup\Scripts\Specialize.ps1">
+$scripts = @(
+	{
+		&amp; 'C:\Windows\Setup\Scripts\GetComputerName.ps1' &gt; 'C:\Windows\Setup\Scripts\ComputerName.txt';
+		Start-Process -FilePath ( Get-Process -Id $PID ).Path -ArgumentList '-ExecutionPolicy "Unrestricted" -NoProfile -File "C:\Windows\Setup\Scripts\SetComputerName.ps1"' -WindowStyle 'Hidden';
+		Start-Sleep -Seconds 10;
+	};
+	{
+		net.exe accounts /maxpwage:UNLIMITED;
+	};
+	{
+		reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Dsh" /v AllowNewsAndInterests /t REG_DWORD /d 0 /f;
+	};
+	{
+		reg.exe add "HKLM\Software\Policies\Microsoft\Windows\CloudContent" /v "DisableWindowsConsumerFeatures" /t REG_DWORD /d 1 /f;
+	};
+	{
+		reg.exe add "HKLM\Software\Policies\Microsoft\Edge" /v HideFirstRunExperience /t REG_DWORD /d 1 /f;
+	};
+	{
+		&amp; 'C:\Windows\Setup\Scripts\SetStartPins.ps1';
+	};
+	{
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\ControlAnimations" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\AnimateMinMax" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\TaskbarAnimations" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\DWMAeroPeekEnabled" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\MenuAnimation" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\TooltipAnimation" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\SelectionFade" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\DWMSaveThumbnailEnabled" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\CursorShadow" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\ListviewShadow" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\ThumbnailsOrIcon" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\ListviewAlphaSelect" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\DragFullWindows" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\ComboBoxAnimation" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\FontSmoothing" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\ListBoxSmoothScrolling" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+		Set-ItemProperty -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects\DropShadow" -Name 'DefaultValue' -Value 0 -Type 'DWord' -Force;
+	};
+);
+
+&amp; {
+  [float] $complete = 0;
+  [float] $increment = 100 / $scripts.Count;
+  foreach( $script in $scripts ) {
+    Write-Progress -Activity 'Running scripts to customize your Windows installation. Do not close this window.' -PercentComplete $complete;
+    '*** Will now execute command &#xAB;{0}&#xBB;.' -f $(
+      $str = $script.ToString().Trim() -replace '\s+', ' ';
+      $max = 100;
+      if( $str.Length -le $max ) {
+        $str;
+      } else {
+        $str.Substring( 0, $max - 1 ) + '&#x2026;';
+      }
+    );
+    $start = [datetime]::Now;
+    &amp; $script;
+    '*** Finished executing command after {0:0} ms.' -f [datetime]::Now.Subtract( $start ).TotalMilliseconds;
+    "`r`n" * 3;
+    $complete += $increment;
+  }
+} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; "C:\Windows\Setup\Scripts\Specialize.log";
+		</File>
+		<File path="C:\Windows\Setup\Scripts\UserOnce.ps1">
+$scripts = @(
+	{
+		Set-ItemProperty -LiteralPath 'Registry::HKCU\Software\Microsoft\Windows\CurrentVersion\Search' -Name 'SearchboxTaskbarMode' -Type 'DWord' -Value 0;
+	};
+	{
+		Set-ItemProperty -LiteralPath 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects' -Name 'VisualFXSetting' -Type 'DWord' -Value 2 -Force;
+	};
+	{
+		New-Item -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Force;
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{5399e694-6ce5-4d6c-8fce-1d8870fdcba0}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{b4bfcc3a-db2c-424c-b029-7fe99a87c641}' -Value 0 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{a8cdff1c-4878-43be-b5fd-f8091c1c60d0}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{374de290-123f-4565-9164-39c4925e467b}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{f874310e-b6b7-47dc-bc84-b9e6b38f5903}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{1cf1260c-4dd0-4ebb-811f-33c572699fde}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{f02c1a0d-be21-4350-88b0-7367fc96ef3c}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{3add1653-eb32-4cb0-bbd7-dfa0abb5acca}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{645ff040-5081-101b-9f08-00aa002f954e}' -Value 0 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{20d04fe0-3aea-1069-a2d8-08002b30309d}' -Value 0 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{59031a47-3f72-44a7-89c5-5595fe6b30ee}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu' -Name '{a0953c92-50dc-43bf-be83-3742fed03c9c}' -Value 1 -Type 'DWord';
+		New-Item -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Force;
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{5399e694-6ce5-4d6c-8fce-1d8870fdcba0}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{b4bfcc3a-db2c-424c-b029-7fe99a87c641}' -Value 0 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{a8cdff1c-4878-43be-b5fd-f8091c1c60d0}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{374de290-123f-4565-9164-39c4925e467b}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{f874310e-b6b7-47dc-bc84-b9e6b38f5903}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{1cf1260c-4dd0-4ebb-811f-33c572699fde}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{f02c1a0d-be21-4350-88b0-7367fc96ef3c}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{3add1653-eb32-4cb0-bbd7-dfa0abb5acca}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{645ff040-5081-101b-9f08-00aa002f954e}' -Value 0 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{20d04fe0-3aea-1069-a2d8-08002b30309d}' -Value 0 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{59031a47-3f72-44a7-89c5-5595fe6b30ee}' -Value 1 -Type 'DWord';
+		Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' -Name '{a0953c92-50dc-43bf-be83-3742fed03c9c}' -Value 1 -Type 'DWord';
+	};
+	{
+		&amp; 'C:\Windows\Setup\Scripts\SetWallpaper.ps1';
+	};
+	{
+		Get-Process -Name 'explorer' -ErrorAction 'SilentlyContinue' | Where-Object -FilterScript {
+			$_.SessionId -eq ( Get-Process -Id $PID ).SessionId;
+		} | Stop-Process -Force;
+	};
+);
+
+&amp; {
+  [float] $complete = 0;
+  [float] $increment = 100 / $scripts.Count;
+  foreach( $script in $scripts ) {
+    Write-Progress -Activity 'Running scripts to configure this user account. Do not close this window.' -PercentComplete $complete;
+    '*** Will now execute command &#xAB;{0}&#xBB;.' -f $(
+      $str = $script.ToString().Trim() -replace '\s+', ' ';
+      $max = 100;
+      if( $str.Length -le $max ) {
+        $str;
+      } else {
+        $str.Substring( 0, $max - 1 ) + '&#x2026;';
+      }
+    );
+    $start = [datetime]::Now;
+    &amp; $script;
+    '*** Finished executing command after {0:0} ms.' -f [datetime]::Now.Subtract( $start ).TotalMilliseconds;
+    "`r`n" * 3;
+    $complete += $increment;
+  }
+} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; "$env:TEMP\UserOnce.log";
+		</File>
+		<File path="C:\Windows\Setup\Scripts\DefaultUser.ps1">
+$scripts = @(
+	{
+		reg.exe add "HKU\DefaultUser\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ShowTaskViewButton /t REG_DWORD /d 0 /f;
+	};
+	{
+		$names = @(
+		  'ContentDeliveryAllowed';
+		  'FeatureManagementEnabled';
+		  'OEMPreInstalledAppsEnabled';
+		  'PreInstalledAppsEnabled';
+		  'PreInstalledAppsEverEnabled';
+		  'SilentInstalledAppsEnabled';
+		  'SoftLandingEnabled';
+		  'SubscribedContentEnabled';
+		  'SubscribedContent-310093Enabled';
+		  'SubscribedContent-338387Enabled';
+		  'SubscribedContent-338388Enabled';
+		  'SubscribedContent-338389Enabled';
+		  'SubscribedContent-338393Enabled';
+		  'SubscribedContent-353694Enabled';
+		  'SubscribedContent-353696Enabled';
+		  'SubscribedContent-353698Enabled';
+		  'SystemPaneSuggestionsEnabled';
+		);
+		
+		foreach( $name in $names ) {
+		  reg.exe add "HKU\DefaultUser\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v $name /t REG_DWORD /d 0 /f;
+		}
+	};
+	{
+		reg.exe add "HKU\DefaultUser\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarAl /t REG_DWORD /d 0 /f;
+	};
+	{
+		foreach( $root in 'Registry::HKU\.DEFAULT', 'Registry::HKU\DefaultUser' ) {
+		  Set-ItemProperty -LiteralPath "$root\Control Panel\Keyboard" -Name 'InitialKeyboardIndicators' -Type 'String' -Value 2 -Force;
+		}
+	};
+	{
+		reg.exe add "HKU\DefaultUser\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "UnattendedSetup" /t REG_SZ /d "powershell.exe -WindowStyle \""Normal\"" -ExecutionPolicy \""Unrestricted\"" -NoProfile -File \""C:\Windows\Setup\Scripts\UserOnce.ps1\""" /f;
+	};
+);
+
+&amp; {
+  [float] $complete = 0;
+  [float] $increment = 100 / $scripts.Count;
+  foreach( $script in $scripts ) {
+    Write-Progress -Activity 'Running scripts to modify the default user&#x2019;&#x2019;s registry hive. Do not close this window.' -PercentComplete $complete;
+    '*** Will now execute command &#xAB;{0}&#xBB;.' -f $(
+      $str = $script.ToString().Trim() -replace '\s+', ' ';
+      $max = 100;
+      if( $str.Length -le $max ) {
+        $str;
+      } else {
+        $str.Substring( 0, $max - 1 ) + '&#x2026;';
+      }
+    );
+    $start = [datetime]::Now;
+    &amp; $script;
+    '*** Finished executing command after {0:0} ms.' -f [datetime]::Now.Subtract( $start ).TotalMilliseconds;
+    "`r`n" * 3;
+    $complete += $increment;
+  }
+} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; "C:\Windows\Setup\Scripts\DefaultUser.log";
+		</File>
+		 <!--
+		<File path="C:\Windows\Setup\Scripts\FirstLogon.ps1">
+$scripts = @(
+	{
+		Set-ItemProperty -LiteralPath 'Registry::HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'AutoLogonCount' -Type 'DWord' -Force -Value 0;
+	};
+	{
+		cmd.exe /c "rmdir C:\Windows.old";
+	};
+	{
+		C:\Windows\Setup\Scripts\unattend-02.cmd;
+	};
+	{
+		Remove-Item -LiteralPath @(
+		  'C:\Windows\Panther\unattend.xml';
+		  'C:\Windows\Panther\unattend-original.xml';
+		  'C:\Windows\Setup\Scripts\Wifi.xml';
+		) -Force -ErrorAction 'SilentlyContinue' -Verbose;
+	};
+);
+
+&amp; {
+  [float] $complete = 0;
+  [float] $increment = 100 / $scripts.Count;
+  foreach( $script in $scripts ) {
+    Write-Progress -Activity 'Running scripts to finalize your Windows installation. Do not close this window.' -PercentComplete $complete;
+    '*** Will now execute command &#xAB;{0}&#xBB;.' -f $(
+      $str = $script.ToString().Trim() -replace '\s+', ' ';
+      $max = 100;
+      if( $str.Length -le $max ) {
+        $str;
+      } else {
+        $str.Substring( 0, $max - 1 ) + '&#x2026;';
+      }
+    );
+    $start = [datetime]::Now;
+    &amp; $script;
+    '*** Finished executing command after {0:0} ms.' -f [datetime]::Now.Subtract( $start ).TotalMilliseconds;
+    "`r`n" * 3;
+    $complete += $increment;
+  }
+} *&gt;&amp;1 | Out-String -Width 1KB -Stream &gt;&gt; "C:\Windows\Setup\Scripts\FirstLogon.log";
+		</File>
+		-->
+		<File path="C:\Windows\Setup\Scripts\FirstLogon.ps1">
+powershell.exe -noexit -ExecutionPolicy Bypass &quot;&amp; &quot;C:\Windows\Setup\Scripts\update-driver.ps1&quot;&quot;
+		</File>
+	</Extensions>
+</unattend>
