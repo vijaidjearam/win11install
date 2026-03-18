@@ -16,8 +16,8 @@ $Script:CooldownSeconds  = 5
 $Script:DriverProcesses  = @('drvinst','pnputil','DPInst','DPInst64','SetupAPI')
 $Script:SpinnerFrames    = @('[ ]','[= ]','[== ]','[=== ]','[====]','[ ===]','[ ==]','[ =]')
 $Script:ChocoSourceName  = 'chocosia'
-$Script:ChocoSourceUrl   = 'http://choco.local.xyz.fr/repository/chocolatey-group'
-$Script:NetworkShareBase    = '\\synosia.local.xyz.fr\batchs'
+$Script:ChocoSourceUrl   = $env:ChocoSourceUrl
+$Script:NetworkShareBase    = $env:NetworkShareBase
 $Script:ShareDriverFolder   = 'driver'
 $Script:ManufacturerShareMap = @{
     'Dell'             = 'dell'
