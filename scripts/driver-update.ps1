@@ -1527,7 +1527,55 @@ try {
         Write-LoggedHost $sl -ForegroundColor Green
     }
     Write-LoggedHost
-    Remove-ScriptState
+    # --- RECOVERY PARTITION PROMPT ---
+    Write-LoggedHost
+    Write-LoggedHost "======================================================================" -ForegroundColor Cyan
+    Write-LoggedHost "          RECOVERY PARTITION SETUP" -ForegroundColor Cyan
+    Write-LoggedHost "======================================================================" -ForegroundColor Cyan
+    Write-LoggedHost "  This will capture a full system image (apps + drivers + settings)" -ForegroundColor White
+    Write-LoggedHost "  and create a hidden recovery partition for factory reset." -ForegroundColor White
+    Write-LoggedHost "  Estimated time: 30-75 minutes." -ForegroundColor Yellow
+    Write-LoggedHost "======================================================================" -ForegroundColor Cyan
+    Write-LoggedHost
+
+    $recoveryScriptPath = "C:\Windows\Setup\Scripts\create-recover-partition.ps1"
+
+    do {
+        $userChoice = Read-Host "  Do you want to create a Recovery Partition? (yes/no)"
+        $userChoice = $userChoice.Trim().ToLower()
+    } while ($userChoice -notin @('yes','no','y','n'))
+
+    if ($userChoice -in @('yes','y')) {
+        Write-LoggedHost
+        Write-Status OK "User selected YES - launching Recovery Partition setup..."
+        Write-LoggedHost
+
+        if (Test-Path $recoveryScriptPath) {
+            try {
+                Write-Status INFO "Executing: $recoveryScriptPath"
+                & $recoveryScriptPath
+                Write-Status OK "Recovery Partition script completed."
+            }
+            catch {
+                Write-Status ERROR "Recovery Partition script failed: $($_.Exception.Message)"
+            }
+        }
+        else {
+            Write-Status ERROR "Recovery script not found at: $recoveryScriptPath"
+            Write-Status INFO "Please place 'create_recovery.ps1' in C:\Temp\ and run it manually."
+        }
+    }
+    else {
+        Write-LoggedHost
+        Write-Status INFO "User selected NO - skipping Recovery Partition setup."
+        Write-LoggedHost
+    }
+
+    # ══════════════════════════════════════════════════════════════════
+    #  END OF ADDITION — the existing Remove-ScriptState stays below
+    # ══════════════════════════════════════════════════════════════════
+
+    Remove-ScriptState   
 }
 catch {
     Write-LoggedHost
