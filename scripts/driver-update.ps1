@@ -32,7 +32,6 @@ $Script:USBDriverFolders = @('DriversOS','Drivers')
 #===================================================================
 function Append-ToLog {
     param([Parameter(Mandatory=$false)][AllowEmptyString()][string]$Message = "")
-    # No-op: Start-Transcript captures all console output automatically
 }
 
 function Write-Status {
@@ -259,8 +258,6 @@ function Find-Executable {
         [string[]]$SearchRoots = @(),
         [string]$Label = "executable"
     )
-
-    # 1 - Check known paths (MUST be a file, not a directory)
     foreach ($p in $KnownPaths) {
         if (Test-Path $p -PathType Leaf) {
             Write-Status OK "Found $Label at known path: $p"
@@ -268,8 +265,6 @@ function Find-Executable {
         }
     }
     Write-Status INFO "$Label not found at known paths."
-
-    # 2 - Search Chocolatey lib folder
     $chocoLib = "$env:ProgramData\chocolatey\lib"
     if (Test-Path $chocoLib) {
         Write-Status INFO "Searching Chocolatey lib for $FileName..."
@@ -279,8 +274,6 @@ function Find-Executable {
             return $found.FullName
         }
     }
-
-    # 3 - Search Chocolatey bin for shims
     $chocoBin = "$env:ProgramData\chocolatey\bin"
     if (Test-Path $chocoBin) {
         $shimPath = Join-Path $chocoBin $FileName
@@ -289,8 +282,6 @@ function Find-Executable {
             return $shimPath
         }
     }
-
-    # 4 - Search provided root directories
     $defaultRoots = @(
         'C:\Program Files'
         'C:\Program Files (x86)'
@@ -309,7 +300,6 @@ function Find-Executable {
             return $found.FullName
         }
     }
-
     Write-Status WARN "$Label ($FileName) not found anywhere."
     return $null
 }
@@ -323,17 +313,13 @@ function Invoke-CommandVerbose {
         [Parameter(Mandatory)][string]$Arguments,
         [Parameter(Mandatory)][string]$Label
     )
-
-    # Validate: must exist AND be a file (not a directory)
     if (-not (Test-Path $FilePath -PathType Leaf)) {
         Write-Status ERROR "Executable not found or is a directory: $FilePath"
         return 999
     }
-
     $exeName = Split-Path $FilePath -Leaf
     Write-Status INFO "Executing: $exeName $Arguments"
     Write-Status DEBUG "Full path: $FilePath"
-
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
     $psi.FileName = $FilePath
     $psi.Arguments = $Arguments
@@ -696,7 +682,7 @@ function Test-InfMatchesSystem {
 }
 
 #===================================================================
-#  STATE-MANAGEMENT
+#  STATE-MANAGEMENT  (MODIFIED — added recovery partition fields)
 #===================================================================
 function Get-ScriptState {
     if (Test-Path $Script:StateFile) {
@@ -713,6 +699,10 @@ function Get-ScriptState {
                 TotalDriversTimedOut = 0; TotalTimeSpent = 0; TotalProcessesKilled = 0
                 SystemManufacturer = ""; SystemModel = ""; CleanModel = ""
                 GuestAuthConfigured = $false
+                # ── Recovery partition state ──
+                RecoveryPartitionPrompted  = $false
+                RecoveryPartitionChoice    = ""
+                RecoveryPartitionCompleted = $false
             }
             foreach ($k in $defaults.Keys) {
                 if (-not $json.PSObject.Properties[$k]) {
@@ -734,6 +724,10 @@ function Get-ScriptState {
         TotalDriversTimedOut = 0; TotalTimeSpent = 0; TotalProcessesKilled = 0
         SystemManufacturer = ""; SystemModel = ""; CleanModel = ""
         GuestAuthConfigured = $false
+        # ── Recovery partition state ──
+        RecoveryPartitionPrompted  = $false
+        RecoveryPartitionChoice    = ""
+        RecoveryPartitionCompleted = $false
     }
 }
 
@@ -1236,7 +1230,6 @@ function Find-DellCLI {
 function Invoke-DellUpdates {
     param([pscustomobject]$State)
     Write-Banner "DELL SYSTEM UPDATE"
-
     $cli = Find-DellCLI
     if (-not $cli) {
         Install-ChocoPackage -PackageName "dellcommandupdate" -DisplayName "Dell Command Update" | Out-Null
@@ -1245,7 +1238,6 @@ function Invoke-DellUpdates {
     }
     if (-not $cli) { Write-Status ERROR "Dell CLI not found anywhere."; return $false }
     Write-Status OK "Dell CLI: $cli"
-
     switch ($State.ManufacturerPhase) {
         0 {
             if ($State.DellADRFailed) { $State.ManufacturerPhase = 2; Set-ScriptState -State $State; return (Invoke-DellUpdates -State $State) }
@@ -1286,13 +1278,11 @@ function Invoke-DellUpdates {
 }
 
 #===================================================================
-#  HP UPDATES (FIXED - robust exe discovery)
+#  HP UPDATES
 #===================================================================
 function Find-HPIA {
     $knownPaths = @(
-        # Chocolatey install location (priority - most common after choco install)
         "$env:ProgramData\chocolatey\lib\hpimageassistant\tools\HPImageAssistant.exe"
-        # Standard HP install locations
         'C:\HP\HPIA\HPImageAssistant.exe'
         'C:\Program Files\HP\HPIA\HPImageAssistant.exe'
         'C:\Program Files (x86)\HP\HPIA\HPImageAssistant.exe'
@@ -1308,16 +1298,10 @@ function Find-HPIA {
 function Invoke-HPUpdates {
     param([pscustomobject]$State)
     Write-Banner "HP SYSTEM UPDATE"
-
-    # ── Find HPIA before Chocolatey ──
     Write-SubBanner "Locating HP Image Assistant"
     $hpia = Find-HPIA
-
-    # ── Try Chocolatey install if not found ──
     if (-not $hpia) {
         Write-Status WARN "HPIA not found - attempting Chocolatey install..."
-
-        # Try multiple known package names
         $chocoPackages = @('hpimageassistant', 'hp-hpia', 'hp-image-assistant')
         $installed = $false
         foreach ($pkg in $chocoPackages) {
@@ -1325,48 +1309,34 @@ function Invoke-HPUpdates {
             $result = Install-ChocoPackage -PackageName $pkg -DisplayName "HP Image Assistant ($pkg)"
             if ($result) { $installed = $true; break }
         }
-
         if ($installed) {
             Start-Sleep -Seconds 5
-            # Refresh PATH
             $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User')
             $hpia = Find-HPIA
         }
     }
-
-    # ── Final validation ──
     if (-not $hpia) {
         Write-Status ERROR "HP Image Assistant (HPImageAssistant.exe) could not be found anywhere."
         Write-Status INFO "Searched: known paths, Chocolatey lib, Program Files, C:\HP, C:\SWSetup"
         Write-Status INFO "Please install HPIA manually and re-run the script."
         return $false
     }
-
-    # Verify it is a file, not a directory
     $hpiaItem = Get-Item $hpia -ErrorAction SilentlyContinue
     if ($null -eq $hpiaItem -or $hpiaItem.PSIsContainer) {
         Write-Status ERROR "Path is a directory, not an executable: $hpia"
         return $false
     }
-
     Write-Status OK  "HPIA executable: $hpia"
     Write-Status DEBUG "HPIA size: $([math]::Round($hpiaItem.Length / 1MB, 1)) MB"
     Write-Status DEBUG "HPIA version: $($hpiaItem.VersionInfo.FileVersion)"
-
-    # ── Create report folder ──
     $hpiaReport = 'C:\Temp\HPIA'
     if (-not (Test-Path $hpiaReport)) {
         New-Item -Path $hpiaReport -ItemType Directory -Force | Out-Null
     }
-
-    # ── Run HPIA ──
     Write-SubBanner "HP Image Assistant: Analyze & Install"
     Write-Status STEP "All update names and progress will appear below."
-
     $hpArgs = "/Operation:Analyze /Action:Install /Selection:All /Silent /Noninteractive /ReportFolder:`"$hpiaReport`""
     $hpExit = Invoke-CommandVerbose -FilePath $hpia -Arguments $hpArgs -Label "HPIA"
-
-    # ── Report results ──
     Write-LoggedHost
     Write-LoggedHost "  ======================================================================" -ForegroundColor DarkCyan
     Write-LoggedHost "              HP IMAGE ASSISTANT RESULTS" -ForegroundColor Cyan
@@ -1374,8 +1344,6 @@ function Invoke-HPUpdates {
     Write-LoggedHost "  Executable:  $hpia" -ForegroundColor White
     Write-LoggedHost "  Exit code:   $hpExit" -ForegroundColor White
     Write-LoggedHost "  Report:      $hpiaReport" -ForegroundColor White
-
-    # Parse report if available
     $jsonReport = Get-ChildItem -Path $hpiaReport -Filter '*.json' -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
     if ($jsonReport) {
         Write-LoggedHost "  Report file: $($jsonReport.FullName)" -ForegroundColor Green
@@ -1399,7 +1367,6 @@ function Invoke-HPUpdates {
     }
     Write-LoggedHost "  ======================================================================" -ForegroundColor DarkCyan
     Write-LoggedHost
-
     switch ($hpExit) {
         0    { Write-Status OK "HP updates completed successfully."; return $true }
         256  { Write-Status WARN "HP: reboot needed for some updates."; return $true }
@@ -1410,7 +1377,13 @@ function Invoke-HPUpdates {
 }
 
 #===================================================================
-#  MAIN EXECUTION
+#  MAIN EXECUTION  (MODIFIED — Phase 2 = Recovery Partition)
+#===================================================================
+#  Phase flow:
+#    0  →  USB drivers + Network-share drivers  (may reboot)
+#    1  →  Online OEM updates (Dell / HP)       (may reboot)
+#    2  →  Recovery Partition prompt & creation  (new)
+#    3  →  Final summary + state cleanup
 #===================================================================
 try {
     if (-not (Initialize-PersistentScript)) { throw "Failed to initialise." }
@@ -1433,7 +1406,7 @@ try {
         "  Driver share:  $expectedPath"
         "  Timeout:       $Script:DriverTimeout sec/driver"
         "  Choco source:  $Script:ChocoSourceName"
-        "  Flow:          USB(targeted) -> GuestAuth -> Share(targeted) -> OEM(online)"
+        "  Flow:          USB(targeted) -> Share(targeted) -> OEM(online) -> RecoveryPartition"
         "======================================================================"
     )
     Write-LoggedHost
@@ -1455,7 +1428,9 @@ try {
     Write-Host "--- End State ---" -ForegroundColor DarkGray
     Write-Host ""
 
-    # PHASE-0A: USB drivers (TARGETED)
+    # ══════════════════════════════════════════════════════════════
+    #  PHASE 0 : USB + Network-share drivers
+    # ══════════════════════════════════════════════════════════════
     if ($state.Phase -eq 0) {
         if (-not $state.USBCompleted) {
             $usbResult = Install-USBNetworkDrivers -State $state
@@ -1471,7 +1446,6 @@ try {
                 $state.USBRebootDone = $true; Set-ScriptState -State $state
             }
         }
-        # PHASE-0B: Network share drivers (TARGETED)
         if (-not $state.NetworkShareCompleted) {
             $netResult = Install-NetworkShareDrivers -State $state
             if ($netResult.NeedsReboot) {
@@ -1489,8 +1463,10 @@ try {
         }
     }
 
-    # PHASE-1: Online OEM updates
-    if ($state.Phase -ge 1) {
+    # ══════════════════════════════════════════════════════════════
+    #  PHASE 1 : Online OEM updates  (CHANGED: -eq 1, not -ge 1)
+    # ══════════════════════════════════════════════════════════════
+    if ($state.Phase -eq 1) {
         Write-Banner "PHASE 1: ONLINE OEM UPDATES"
         if (-not (Test-InternetConnectivity -MaxRetries 15 -RetryDelay 10)) {
             Write-Status ERROR "No internet."; try { Stop-Transcript } catch { }; exit 1
@@ -1500,82 +1476,123 @@ try {
         if ($manufacturer -like '*Dell*') { Invoke-DellUpdates -State $state | Out-Null }
         elseif ($manufacturer -match 'HP|Hewlett[-\s]?Packard') { Invoke-HPUpdates -State $state | Out-Null }
         else { Write-Status WARN "Unsupported: $manufacturer" }
+
+        # ── OEM phase finished (if it needed a reboot it already exited) ──
+        $state.Phase = 2
+        Set-ScriptState -State $state
     }
 
-    # FINAL SUMMARY
-    Stop-DriverInstallProcesses -Silent | Out-Null
-    $summaryLines = @(
-        "======================================================================"
-        "      DRIVER UPDATE SCRIPT COMPLETED SUCCESSFULLY!"
-        "======================================================================"
-        "  System:          $($state.SystemManufacturer) $($state.SystemModel)"
-        "  Clean model:     $($state.CleanModel)"
-        "  Share path:      $($state.NetworkSharePath)"
-        "  Guest auth:      $($state.GuestAuthConfigured)"
-        "  Reboots:         $($state.RebootCount)"
-        "  Drivers added:   $($state.TotalDriversAdded)"
-        "  Installed:       $($state.TotalDriversInstalled)"
-        "  Skipped:         $($state.TotalDriversSkipped)"
-        "  Failed:          $($state.TotalDriversFailed)"
-        "  Timed out:       $($state.TotalDriversTimedOut)"
-        "  Killed:          $($state.TotalProcessesKilled)"
-        "  Total time:      $(Format-Duration $state.TotalTimeSpent)"
-        "======================================================================"
-    )
-    Write-LoggedHost
-    foreach ($sl in $summaryLines) {
-        Write-LoggedHost $sl -ForegroundColor Green
-    }
-    Write-LoggedHost
-    # --- RECOVERY PARTITION PROMPT ---
-    Write-LoggedHost
-    Write-LoggedHost "======================================================================" -ForegroundColor Cyan
-    Write-LoggedHost "          RECOVERY PARTITION SETUP" -ForegroundColor Cyan
-    Write-LoggedHost "======================================================================" -ForegroundColor Cyan
-    Write-LoggedHost "  This will capture a full system image (apps + drivers + settings)" -ForegroundColor White
-    Write-LoggedHost "  and create a hidden recovery partition for factory reset." -ForegroundColor White
-    Write-LoggedHost "  Estimated time: 30-75 minutes." -ForegroundColor Yellow
-    Write-LoggedHost "======================================================================" -ForegroundColor Cyan
-    Write-LoggedHost
+    # ══════════════════════════════════════════════════════════════
+    #  PHASE 2 : Recovery Partition  (NEW — survives reboots)
+    # ══════════════════════════════════════════════════════════════
+    if ($state.Phase -eq 2) {
 
-    $recoveryScriptPath = "C:\Windows\Setup\Scripts\create-recover-partition.ps1"
+        if (-not $state.RecoveryPartitionCompleted) {
 
-    do {
-        $userChoice = Read-Host "  Do you want to create a Recovery Partition? (yes/no)"
-        $userChoice = $userChoice.Trim().ToLower()
-    } while ($userChoice -notin @('yes','no','y','n'))
+            Write-LoggedHost
+            Write-LoggedHost "======================================================================" -ForegroundColor Cyan
+            Write-LoggedHost "          RECOVERY PARTITION SETUP" -ForegroundColor Cyan
+            Write-LoggedHost "======================================================================" -ForegroundColor Cyan
+            Write-LoggedHost "  This will capture a full system image (apps + drivers + settings)" -ForegroundColor White
+            Write-LoggedHost "  and create a hidden recovery partition for factory reset." -ForegroundColor White
+            Write-LoggedHost "  Estimated time: 30-75 minutes." -ForegroundColor Yellow
+            Write-LoggedHost "======================================================================" -ForegroundColor Cyan
+            Write-LoggedHost
 
-    if ($userChoice -in @('yes','y')) {
-        Write-LoggedHost
-        Write-Status OK "User selected YES - launching Recovery Partition setup..."
-        Write-LoggedHost
+            # If we haven't prompted yet (or script restarted before prompt)
+            if (-not $state.RecoveryPartitionPrompted) {
+                do {
+                    $userChoice = Read-Host "  Do you want to create a Recovery Partition? (yes/no)"
+                    $userChoice = $userChoice.Trim().ToLower()
+                } while ($userChoice -notin @('yes','no','y','n'))
 
-        if (Test-Path $recoveryScriptPath) {
-            try {
-                Write-Status INFO "Executing: $recoveryScriptPath"
-                & $recoveryScriptPath
-                Write-Status OK "Recovery Partition script completed."
+                $state.RecoveryPartitionPrompted = $true
+                $state.RecoveryPartitionChoice   = $userChoice
+                Set-ScriptState -State $state
             }
-            catch {
-                Write-Status ERROR "Recovery Partition script failed: $($_.Exception.Message)"
+            else {
+                # Already prompted before a reboot — reuse saved choice
+                $userChoice = $state.RecoveryPartitionChoice
+                Write-Status INFO "Resuming with previous choice: $userChoice"
             }
+
+            $recoveryScriptPath = "C:\Windows\Setup\Scripts\create-recover-partition.ps1"
+
+            if ($userChoice -in @('yes','y')) {
+                Write-LoggedHost
+                Write-Status OK "User selected YES - launching Recovery Partition setup..."
+                Write-LoggedHost
+
+                if (Test-Path $recoveryScriptPath) {
+                    try {
+                        Write-Status INFO "Executing: $recoveryScriptPath"
+                        & $recoveryScriptPath
+                        Write-Status OK "Recovery Partition script completed."
+                        $state.RecoveryPartitionCompleted = $true
+                    }
+                    catch {
+                        Write-Status ERROR "Recovery Partition script failed: $($_.Exception.Message)"
+                        $state.RecoveryPartitionCompleted = $true   # mark done to avoid infinite retry
+                    }
+                }
+                else {
+                    Write-Status ERROR "Recovery script not found at: $recoveryScriptPath"
+                    Write-Status INFO "Please place 'create-recover-partition.ps1' at the path above and re-run."
+                    $state.RecoveryPartitionCompleted = $true
+                }
+            }
+            else {
+                Write-LoggedHost
+                Write-Status INFO "User selected NO - skipping Recovery Partition setup."
+                Write-LoggedHost
+                $state.RecoveryPartitionCompleted = $true
+            }
+
+            Set-ScriptState -State $state
         }
         else {
-            Write-Status ERROR "Recovery script not found at: $recoveryScriptPath"
-            Write-Status INFO "Please place 'create_recovery.ps1' in C:\Temp\ and run it manually."
+            Write-Status OK "Recovery partition step already completed - skipping."
         }
-    }
-    else {
-        Write-LoggedHost
-        Write-Status INFO "User selected NO - skipping Recovery Partition setup."
-        Write-LoggedHost
+
+        # ── Advance to final phase ──
+        $state.Phase = 3
+        Set-ScriptState -State $state
     }
 
-    # ══════════════════════════════════════════════════════════════════
-    #  END OF ADDITION — the existing Remove-ScriptState stays below
-    # ══════════════════════════════════════════════════════════════════
+    # ══════════════════════════════════════════════════════════════
+    #  PHASE 3 : Final Summary & Cleanup
+    # ══════════════════════════════════════════════════════════════
+    if ($state.Phase -ge 3) {
 
-    Remove-ScriptState   
+        Stop-DriverInstallProcesses -Silent | Out-Null
+
+        $summaryLines = @(
+            "======================================================================"
+            "      DRIVER UPDATE SCRIPT COMPLETED SUCCESSFULLY!"
+            "======================================================================"
+            "  System:          $($state.SystemManufacturer) $($state.SystemModel)"
+            "  Clean model:     $($state.CleanModel)"
+            "  Share path:      $($state.NetworkSharePath)"
+            "  Guest auth:      $($state.GuestAuthConfigured)"
+            "  Reboots:         $($state.RebootCount)"
+            "  Drivers added:   $($state.TotalDriversAdded)"
+            "  Installed:       $($state.TotalDriversInstalled)"
+            "  Skipped:         $($state.TotalDriversSkipped)"
+            "  Failed:          $($state.TotalDriversFailed)"
+            "  Timed out:       $($state.TotalDriversTimedOut)"
+            "  Killed:          $($state.TotalProcessesKilled)"
+            "  Total time:      $(Format-Duration $state.TotalTimeSpent)"
+            "  Recovery:        choice=$($state.RecoveryPartitionChoice) completed=$($state.RecoveryPartitionCompleted)"
+            "======================================================================"
+        )
+        Write-LoggedHost
+        foreach ($sl in $summaryLines) {
+            Write-LoggedHost $sl -ForegroundColor Green
+        }
+        Write-LoggedHost
+
+        Remove-ScriptState
+    }
 }
 catch {
     Write-LoggedHost
