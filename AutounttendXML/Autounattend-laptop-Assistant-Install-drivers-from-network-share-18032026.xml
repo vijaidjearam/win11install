@@ -288,16 +288,24 @@ $envVariables = @{
 
 # --- Download Necessary Scripts ---
 # --- Downloading driver update script ---
+                
 $attempts = 0
 do {
     try {
         $uri = [uri]::new(&apos;https://raw.githubusercontent.com/vijaidjearam/win11install/refs/heads/main/scripts/driver-update.ps1&apos;);
-        $file = &apos;C:\Windows\Setup\Scripts\driver-update.ps1&apos;;
-        [System.Net.WebClient]::new().DownloadFile($uri,$file);
+        $file = &apos;C:\Windows\Setup\Scripts\driver-update.ps1&apos;
+        
+        # Ensure directory exists
+        New-Item -ItemType Directory -Path (Split-Path $file) -Force -ErrorAction SilentlyContinue | Out-Null
+        
+        # Download content and save with UTF-8 BOM (required for PowerShell 5.1 to recognize UTF-8)
+        $content = Invoke-RestMethod -Uri $uri -ErrorAction Stop
+        $content | Out-File -FilePath $file -Encoding UTF8 -Force
+        
         Write-Host &quot;Download successful!&quot;
         break
     } catch {
-        Write-Host &quot;Download failed, retrying...&quot;
+        Write-Host &quot;Download failed: $($_.Exception.Message), retrying...&quot;
         Start-Sleep -Seconds 5
     }
     $attempts++
@@ -307,13 +315,20 @@ do {
 $attempts = 0
 do {
     try {
-        $uri = [uri]::new(&apos;https://raw.githubusercontent.com/vijaidjearam/win11install/refs/heads/main/scripts/create-recover-partition.ps1&apos;);
-        $file = &apos;C:\Windows\Setup\Scripts\create-recover-partition.ps1&apos;;
-        [System.Net.WebClient]::new().DownloadFile($uri,$file);
+        $uri = &apos;https://raw.githubusercontent.com/vijaidjearam/win11install/refs/heads/main/scripts/create-recover-partition.ps1&apos;
+        $file = &apos;C:\Windows\Setup\Scripts\create-recover-partition.ps1&apos;
+        
+        # Ensure directory exists
+        New-Item -ItemType Directory -Path (Split-Path $file) -Force -ErrorAction SilentlyContinue | Out-Null
+        
+        # Download content and save with UTF-8 BOM (required for PowerShell 5.1 to recognize UTF-8)
+        $content = Invoke-RestMethod -Uri $uri -ErrorAction Stop
+        $content | Out-File -FilePath $file -Encoding UTF8 -Force
+        
         Write-Host &quot;Download successful!&quot;
         break
     } catch {
-        Write-Host &quot;Download failed, retrying...&quot;
+        Write-Host &quot;Download failed: $($_.Exception.Message), retrying...&quot;
         Start-Sleep -Seconds 5
     }
     $attempts++
