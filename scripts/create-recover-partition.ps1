@@ -1,22 +1,23 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Windows 11 Recovery Partition Creator — Final Version
+    Windows 11 Recovery Partition Creator — Final Version (with Auto-Partition Creation)
     
 .DESCRIPTION
     All fixes included:
+    - STEP 0: Auto-shrink C: and create recovery partition
     - VSS Shadow Copy for WIM capture
     - Hardcoded DISM paths (no variables, no delayed expansion)
     - ping instead of timeout (WinRE compatible)
     - Separate diskpart calls for re-hide
-    - Full logging to C:\temp\restore_log.txt
+    - Full logging to Desktop log file
     - Unattend.xml for silent OOBE
     - Hidden partition support
     - Desktop shortcuts
 
 .NOTES
     Run as Administrator
-    Requires existing recovery partition (create in Disk Management first)
+    Step 0 will create the recovery partition automatically if needed
 #>
 
 # ============================================================
@@ -30,6 +31,11 @@ $ImageDescription    = "FullSystemWithAppsAndDrivers"
 $CompressionType     = "maximum"
 $LogFile             = "$env:USERPROFILE\Desktop\RecoverySetup_Log.txt"
 $ShadowMountPoint    = "C:\ShadowCopyMount"
+
+# Step 0 defaults
+$DefaultShrinkSizeGB       = 50
+$DefaultNewDriveLetter     = "R"
+$DefaultNewVolumeLabel     = "Recovery"
 
 # ============================================================
 # LOGGING
@@ -60,9 +66,311 @@ function Show-Banner {
     Write-Host "  ╔════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
     Write-Host "  ║  Windows 11 - Recovery Partition Creator (Final)           ║" -ForegroundColor Cyan
     Write-Host "  ║  Full System Restore — Apps + Drivers + Settings           ║" -ForegroundColor Cyan
-    Write-Host "  ║  WinRE Compatible — Logging — Hidden Partition Support    ║" -ForegroundColor Cyan
+    Write-Host "  ║  Auto-Partition — WinRE — Logging — Hidden Partition      ║" -ForegroundColor Cyan
     Write-Host "  ╚════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
+}
+
+# ============================================================
+# STEP 0: SHRINK C: AND CREATE RECOVERY PARTITION
+# ============================================================
+
+function Invoke-Step0_CreateRecoveryPartition {
+    param(
+        [int]$ShrinkSizeGB       = $DefaultShrinkSizeGB,
+        [string]$NewDriveLetter  = $DefaultNewDriveLetter,
+        [string]$NewVolumeLabel  = $DefaultNewVolumeLabel
+    )
+
+    Write-Log "STEP 0: SHRINK C: AND CREATE RECOVERY PARTITION" "STEP"
+
+    $ShrinkSizeMB = $ShrinkSizeGB * 1024
+    $ShrinkSizeBytes = [int64]$ShrinkSizeGB * 1GB
+
+    # ────────────────────────────────────────────────────
+    #  Sub-step 0a: Check if recovery partition already exists
+    # ────────────────────────────────────────────────────
+    Write-Host ""
+    Write-Host "  ── Checking for existing recovery partition ──" -ForegroundColor Yellow
+
+    $existingVol = Get-Volume -DriveLetter $NewDriveLetter -ErrorAction SilentlyContinue
+    if ($existingVol) {
+        $existingSizeGB = [math]::Round($existingVol.Size / 1GB, 2)
+        $existingFreeGB = [math]::Round($existingVol.SizeRemaining / 1GB, 2)
+        $existingLabel  = if ($existingVol.FileSystemLabel) { $existingVol.FileSystemLabel } else { "No Label" }
+
+        Write-Host ""
+        Write-Host "  ┌──────────────────────────────────────────────────┐" -ForegroundColor Yellow
+        Write-Host "  │  ⚠  Drive ${NewDriveLetter}: already exists!     " -ForegroundColor Yellow
+        Write-Host "  │  Label      : $existingLabel" -ForegroundColor Yellow
+        Write-Host "  │  Size       : $existingSizeGB GB" -ForegroundColor Yellow
+        Write-Host "  │  Free Space : $existingFreeGB GB" -ForegroundColor Yellow
+        Write-Host "  │  FileSystem : $($existingVol.FileSystem)" -ForegroundColor Yellow
+        Write-Host "  └──────────────────────────────────────────────────┘" -ForegroundColor Yellow
+        Write-Host ""
+
+        $useExisting = Read-Host "  Use existing ${NewDriveLetter}: as recovery partition? (Y/N) [Y]"
+        if ([string]::IsNullOrEmpty($useExisting)) { $useExisting = 'Y' }
+
+        if ($useExisting -eq 'Y' -or $useExisting -eq 'y') {
+            Write-Log "Using existing drive ${NewDriveLetter}: as recovery partition." "SUCCESS"
+            return @{
+                Success     = $true
+                DriveLetter = "${NewDriveLetter}:"
+                Skipped     = $true
+            }
+        }
+        else {
+            Write-Log "Drive ${NewDriveLetter}: exists but user declined to use it." "ERROR"
+            Write-Host "  Please free up drive letter ${NewDriveLetter}: or choose a different letter." -ForegroundColor Red
+            return @{
+                Success     = $false
+                DriveLetter = $null
+                Skipped     = $false
+            }
+        }
+    }
+
+    # Also check if any volume labeled "Recovery" exists on a different letter
+    $recoveryVols = Get-Volume | Where-Object {
+        $_.FileSystemLabel -eq $NewVolumeLabel -and
+        $_.DriveType -eq 'Fixed' -and
+        $_.DriveLetter -and
+        $_.DriveLetter -ne 'C'
+    }
+    if ($recoveryVols) {
+        foreach ($rv in $recoveryVols) {
+            $rvSizeGB = [math]::Round($rv.Size / 1GB, 2)
+            Write-Host "  Found volume labeled '$NewVolumeLabel' on $($rv.DriveLetter): ($rvSizeGB GB)" -ForegroundColor Yellow
+        }
+        $useLabeled = Read-Host "  Use one of these instead of creating a new partition? (Y/N) [N]"
+        if ([string]::IsNullOrEmpty($useLabeled)) { $useLabeled = 'N' }
+
+        if ($useLabeled -eq 'Y' -or $useLabeled -eq 'y') {
+            $selectedLetter = ($recoveryVols | Select-Object -First 1).DriveLetter
+            Write-Log "Using existing labeled volume ${selectedLetter}: as recovery partition." "SUCCESS"
+            return @{
+                Success     = $true
+                DriveLetter = "${selectedLetter}:"
+                Skipped     = $true
+            }
+        }
+    }
+
+    Write-Host "  No existing recovery partition found. Will create one." -ForegroundColor Cyan
+    Write-Host ""
+
+    # ────────────────────────────────────────────────────
+    #  Sub-step 0b: Validate free space on C:
+    # ────────────────────────────────────────────────────
+    Write-Host "  ── Validating C: drive ──" -ForegroundColor Yellow
+
+    $cVolume      = Get-Volume -DriveLetter C
+    $cFreeSpaceGB = [math]::Round($cVolume.SizeRemaining / 1GB, 2)
+    $cTotalSizeGB = [math]::Round($cVolume.Size / 1GB, 2)
+    $cUsedGB      = [math]::Round(($cVolume.Size - $cVolume.SizeRemaining) / 1GB, 2)
+    $bufferGB     = 10  # Keep 10GB free after shrink
+
+    Write-Host "    Total Size  : $cTotalSizeGB GB" -ForegroundColor Gray
+    Write-Host "    Used Space  : $cUsedGB GB" -ForegroundColor Gray
+    Write-Host "    Free Space  : $cFreeSpaceGB GB" -ForegroundColor Gray
+    Write-Host "    Shrink Size : $ShrinkSizeGB GB" -ForegroundColor Gray
+    Write-Host "    Buffer      : $bufferGB GB (minimum remaining free space)" -ForegroundColor Gray
+    Write-Host ""
+
+    if ($cFreeSpaceGB -lt ($ShrinkSizeGB + $bufferGB)) {
+        Write-Log "Insufficient free space on C: to shrink by $ShrinkSizeGB GB." "ERROR"
+        Write-Host "    Need at least $($ShrinkSizeGB + $bufferGB) GB free, have $cFreeSpaceGB GB." -ForegroundColor Red
+        Write-Host ""
+
+        # Offer custom size
+        $maxShrink = [math]::Floor($cFreeSpaceGB - $bufferGB)
+        if ($maxShrink -ge 20) {
+            Write-Host "    Maximum safe shrink size: $maxShrink GB" -ForegroundColor Yellow
+            $customSize = Read-Host "    Enter custom shrink size in GB (minimum 20, or 0 to cancel)"
+            if ($customSize -and [int]$customSize -ge 20 -and [int]$customSize -le $maxShrink) {
+                $ShrinkSizeGB    = [int]$customSize
+                $ShrinkSizeMB    = $ShrinkSizeGB * 1024
+                $ShrinkSizeBytes = [int64]$ShrinkSizeGB * 1GB
+                Write-Log "Custom shrink size: $ShrinkSizeGB GB" "INFO"
+            }
+            else {
+                return @{ Success = $false; DriveLetter = $null; Skipped = $false }
+            }
+        }
+        else {
+            Write-Host "    Not enough space even for minimum 20 GB partition." -ForegroundColor Red
+            return @{ Success = $false; DriveLetter = $null; Skipped = $false }
+        }
+    }
+
+    Write-Host "  [✓] Sufficient free space available." -ForegroundColor Green
+
+    # ────────────────────────────────────────────────────
+    #  Sub-step 0c: Check partition support size
+    # ────────────────────────────────────────────────────
+    Write-Host ""
+    Write-Host "  ── Checking partition constraints ──" -ForegroundColor Yellow
+
+    $cPartition     = Get-Partition -DriveLetter C
+    $currentSizeBytes = $cPartition.Size
+    $newSizeBytes   = $currentSizeBytes - $ShrinkSizeBytes
+
+    try {
+        $supportedSize = Get-PartitionSupportedSize -DriveLetter C
+        $minSizeGB     = [math]::Round($supportedSize.SizeMin / 1GB, 2)
+        $maxSizeGB     = [math]::Round($supportedSize.SizeMax / 1GB, 2)
+        $newSizeGB     = [math]::Round($newSizeBytes / 1GB, 2)
+
+        Write-Host "    Current partition : $([math]::Round($currentSizeBytes / 1GB, 2)) GB" -ForegroundColor Gray
+        Write-Host "    New size after    : $newSizeGB GB" -ForegroundColor Gray
+        Write-Host "    Minimum allowed   : $minSizeGB GB" -ForegroundColor Gray
+        Write-Host ""
+
+        if ($newSizeBytes -lt $supportedSize.SizeMin) {
+            Write-Log "Cannot shrink: new size ($newSizeGB GB) below minimum ($minSizeGB GB)." "ERROR"
+            Write-Host "    Unmovable files may be blocking. Try:" -ForegroundColor Yellow
+            Write-Host "    1. Disable hibernation: powercfg /hibernate off" -ForegroundColor White
+            Write-Host "    2. Disable page file temporarily" -ForegroundColor White
+            Write-Host "    3. Disable System Restore temporarily" -ForegroundColor White
+            Write-Host "    4. Run defrag C: /O" -ForegroundColor White
+            return @{ Success = $false; DriveLetter = $null; Skipped = $false }
+        }
+
+        Write-Host "  [✓] Partition can be shrunk to $newSizeGB GB." -ForegroundColor Green
+    }
+    catch {
+        Write-Log "Warning: Could not verify partition supported size: $_" "WARNING"
+        Write-Host "  [!] Could not verify partition limits. Proceeding anyway..." -ForegroundColor Yellow
+    }
+
+    # ────────────────────────────────────────────────────
+    #  Sub-step 0d: Confirm with user
+    # ────────────────────────────────────────────────────
+    Write-Host ""
+    Write-Host "  ┌──────────────────────────────────────────────────────────┐" -ForegroundColor Yellow
+    Write-Host "  │  Summary of changes:                                      │" -ForegroundColor Yellow
+    Write-Host "  │                                                            │" -ForegroundColor Yellow
+    Write-Host "  │  C: drive will be shrunk by    : $ShrinkSizeGB GB" -ForegroundColor Yellow
+    Write-Host "  │  New partition drive letter     : ${NewDriveLetter}:" -ForegroundColor Yellow
+    Write-Host "  │  New partition label            : $NewVolumeLabel" -ForegroundColor Yellow
+    Write-Host "  │  New partition file system      : NTFS (Quick Format)" -ForegroundColor Yellow
+    Write-Host "  │  New partition size             : ~$ShrinkSizeGB GB" -ForegroundColor Yellow
+    Write-Host "  │                                                            │" -ForegroundColor Yellow
+    Write-Host "  │  ⚠  This operation modifies disk partitions!              │" -ForegroundColor Yellow
+    Write-Host "  │  ⚠  Ensure you have a backup of important data!           │" -ForegroundColor Yellow
+    Write-Host "  └──────────────────────────────────────────────────────────┘" -ForegroundColor Yellow
+    Write-Host ""
+
+    $confirm = Read-Host "  Type 'CREATE' to shrink C: and create the partition (anything else to cancel)"
+    if ($confirm -ne 'CREATE') {
+        Write-Log "Partition creation cancelled by user." "WARNING"
+        return @{ Success = $false; DriveLetter = $null; Skipped = $false }
+    }
+
+    # ────────────────────────────────────────────────────
+    #  Sub-step 0e: Shrink C: drive
+    # ────────────────────────────────────────────────────
+    Write-Host ""
+    Write-Host "  ── Shrinking C: by $ShrinkSizeGB GB ($ShrinkSizeMB MB) ──" -ForegroundColor Yellow
+    Write-Log "Shrinking C: by $ShrinkSizeGB GB..." "INFO"
+
+    try {
+        Resize-Partition -DriveLetter C -Size $newSizeBytes -ErrorAction Stop
+
+        # Verify
+        $updatedPartition = Get-Partition -DriveLetter C
+        $updatedSizeGB    = [math]::Round($updatedPartition.Size / 1GB, 2)
+        Write-Host "  [✓] C: successfully shrunk to $updatedSizeGB GB." -ForegroundColor Green
+        Write-Log "C: shrunk to $updatedSizeGB GB." "SUCCESS"
+    }
+    catch {
+        Write-Log "Failed to shrink C: drive: $_" "ERROR"
+        Write-Host ""
+        Write-Host "  ── Troubleshooting ──" -ForegroundColor Yellow
+        Write-Host "    1. Run: powercfg /hibernate off" -ForegroundColor White
+        Write-Host "    2. Disable page file on C: temporarily" -ForegroundColor White
+        Write-Host "    3. Disable System Restore: vssadmin delete shadows /all" -ForegroundColor White
+        Write-Host "    4. Defrag: defrag C: /O /V" -ForegroundColor White
+        Write-Host "    5. Try a smaller shrink size" -ForegroundColor White
+        return @{ Success = $false; DriveLetter = $null; Skipped = $false }
+    }
+
+    # ────────────────────────────────────────────────────
+    #  Sub-step 0f: Create new partition
+    # ────────────────────────────────────────────────────
+    Write-Host ""
+    Write-Host "  ── Creating new partition (${NewDriveLetter}:) ──" -ForegroundColor Yellow
+    Write-Log "Creating new partition with drive letter ${NewDriveLetter}..." "INFO"
+
+    try {
+        $diskNumber = (Get-Partition -DriveLetter C).DiskNumber
+
+        $newPartition = New-Partition -DiskNumber $diskNumber `
+                                      -UseMaximumSize `
+                                      -DriveLetter $NewDriveLetter `
+                                      -ErrorAction Stop
+
+        Write-Host "  [✓] Partition created on Disk $diskNumber with letter ${NewDriveLetter}:." -ForegroundColor Green
+        Write-Log "Partition created: Disk $diskNumber, Letter ${NewDriveLetter}:." "SUCCESS"
+    }
+    catch {
+        Write-Log "Failed to create partition: $_" "ERROR"
+        Write-Host "  Attempting rollback is not automatic. You may need to extend C: manually." -ForegroundColor Red
+        return @{ Success = $false; DriveLetter = $null; Skipped = $false }
+    }
+
+    # ────────────────────────────────────────────────────
+    #  Sub-step 0g: Quick format as NTFS
+    # ────────────────────────────────────────────────────
+    Write-Host ""
+    Write-Host "  ── Formatting ${NewDriveLetter}: as NTFS (Quick Format) ──" -ForegroundColor Yellow
+    Write-Log "Formatting ${NewDriveLetter}: as NTFS with label '$NewVolumeLabel'..." "INFO"
+
+    try {
+        Format-Volume -DriveLetter $NewDriveLetter `
+                      -FileSystem NTFS `
+                      -NewFileSystemLabel $NewVolumeLabel `
+                      -Confirm:$false `
+                      -ErrorAction Stop
+
+        Write-Host "  [✓] Format completed successfully." -ForegroundColor Green
+        Write-Log "Format completed: NTFS, label '$NewVolumeLabel'." "SUCCESS"
+    }
+    catch {
+        Write-Log "Failed to format partition: $_" "ERROR"
+        return @{ Success = $false; DriveLetter = $null; Skipped = $false }
+    }
+
+    # ────────────────────────────────────────────────────
+    #  Sub-step 0h: Display summary
+    # ────────────────────────────────────────────────────
+    $updatedC  = Get-Volume -DriveLetter C
+    $newVol    = Get-Volume -DriveLetter $NewDriveLetter
+
+    Write-Host ""
+    Write-Host "  ┌──────────────────────────────────────────────────────────┐" -ForegroundColor Green
+    Write-Host "  │  ✅ RECOVERY PARTITION CREATED SUCCESSFULLY!              │" -ForegroundColor Green
+    Write-Host "  │                                                            │" -ForegroundColor Green
+    Write-Host "  │  C: Drive:                                                 │" -ForegroundColor Green
+    Write-Host "  │    Size       : $([math]::Round($updatedC.Size / 1GB, 2)) GB" -ForegroundColor Green
+    Write-Host "  │    Free Space : $([math]::Round($updatedC.SizeRemaining / 1GB, 2)) GB" -ForegroundColor Green
+    Write-Host "  │                                                            │" -ForegroundColor Green
+    Write-Host "  │  ${NewDriveLetter}: Drive:                                 " -ForegroundColor Green
+    Write-Host "  │    Label      : $($newVol.FileSystemLabel)" -ForegroundColor Green
+    Write-Host "  │    Size       : $([math]::Round($newVol.Size / 1GB, 2)) GB" -ForegroundColor Green
+    Write-Host "  │    FileSystem : $($newVol.FileSystem)" -ForegroundColor Green
+    Write-Host "  │    Health     : $($newVol.HealthStatus)" -ForegroundColor Green
+    Write-Host "  └──────────────────────────────────────────────────────────┘" -ForegroundColor Green
+    Write-Host ""
+
+    Write-Log "Recovery partition creation complete." "SUCCESS"
+
+    return @{
+        Success     = $true
+        DriveLetter = "${NewDriveLetter}:"
+        Skipped     = $false
+    }
 }
 
 # ============================================================
@@ -77,10 +385,7 @@ function Show-AvailablePartitions {
     if ($volumes.Count -eq 0) {
         Write-Log "No suitable partitions found!" "ERROR"
         Write-Host ""
-        Write-Host "  Create a recovery partition first:" -ForegroundColor Yellow
-        Write-Host "  1. Win+X → Disk Management" -ForegroundColor White
-        Write-Host "  2. Shrink C: by 30-50 GB" -ForegroundColor White
-        Write-Host "  3. Create New Simple Volume (NTFS, label: Recovery)" -ForegroundColor White
+        Write-Host "  No non-C: fixed partitions detected." -ForegroundColor Yellow
         Write-Host ""
         return $null
     }
@@ -592,14 +897,6 @@ function Save-UnattendXml {
 
 # ============================================================
 # STEP 2: CREATE RECOVERY SCRIPTS
-# ════════════════════════════════════════════════════════════
-# Key design:
-# - NO setlocal EnableDelayedExpansion
-# - NO !variables! in any DISM/diskpart commands
-# - ALL paths hardcoded at generation time
-# - ping instead of timeout (WinRE compatible)
-# - Separate diskpart calls for re-hide
-# - Full logging to C:\temp\restore_log.txt
 # ============================================================
 
 function Invoke-Step2_CreateRecoveryScripts {
@@ -634,9 +931,6 @@ function Invoke-Step2_CreateRecoveryScripts {
 
     # ════════════════════════════════════════════════════════
     #  RESTORE.CMD
-    #
-    #  Fix: Scans ALL drive letters first to find install.wim
-    #  Only uses diskpart if WIM not found on any letter
     # ════════════════════════════════════════════════════════
 
     $restoreScript = @"
@@ -675,11 +969,6 @@ echo  [%time%] Confirmed >> C:\temp\restore_log.txt
 
 REM ──────────────────────────────────────────────────────
 REM  STEP 1/6: FIND the recovery image
-REM
-REM  Method A: Scan all existing drive letters (D-Z)
-REM            WinRE may have already assigned a letter
-REM  Method B: Use diskpart to mount known partition as R:
-REM            For when partition is truly hidden
 REM ──────────────────────────────────────────────────────
 
 echo.
@@ -959,10 +1248,6 @@ echo  [%time%] Format done >> C:\temp\restore_log.txt
 
 REM ──────────────────────────────────────────────────────
 REM  STEP 3/6: Apply recovery image
-REM
-REM  Uses %RECOVERY_DRIVE% which was set during scan.
-REM  This is a SIMPLE %var% — works fine in basic cmd.exe
-REM  (only !var! delayed expansion is broken in WinRE)
 REM ──────────────────────────────────────────────────────
 
 echo.
@@ -1080,7 +1365,6 @@ if exist %RECOVERY_DRIVE%\$RecoveryFolderName\unattend.xml (
 
 REM ──────────────────────────────────────────────────────
 REM  STEP 6/6: Re-hide recovery partition
-REM  Separate diskpart calls for reliability
 REM ──────────────────────────────────────────────────────
 
 echo.
@@ -1666,7 +1950,7 @@ exit
 # ============================================================
 
 function Main {
-    "Recovery Setup Log (Final) - $(Get-Date)" | Out-File -FilePath $LogFile -Force
+    "Recovery Setup Log (Final + Auto-Partition) - $(Get-Date)" | Out-File -FilePath $LogFile -Force
 
     Show-Banner
 
@@ -1682,13 +1966,62 @@ function Main {
 
     Write-Log "Running with Administrator privileges." "SUCCESS"
 
-    # ── Select recovery drive ──
-    if ([string]::IsNullOrEmpty($RecoveryDriveLetter)) {
-        $RecoveryDriveLetter = Get-RecoveryDrive
-        if ($null -eq $RecoveryDriveLetter) {
-            Write-Log "No recovery partition selected. Exiting." "ERROR"
+    # ═══════════════════════════════════
+    #  STEP 0: CREATE OR SELECT RECOVERY PARTITION
+    # ═══════════════════════════════════
+    Write-Host ""
+    Write-Host "  ┌──────────────────────────────────────────────────────────┐" -ForegroundColor Cyan
+    Write-Host "  │  How would you like to set up the recovery partition?     │" -ForegroundColor Cyan
+    Write-Host "  │                                                            │" -ForegroundColor Cyan
+    Write-Host "  │  [1] AUTO — Shrink C: and create new partition            │" -ForegroundColor Cyan
+    Write-Host "  │             (Recommended — creates R: automatically)       │" -ForegroundColor Cyan
+    Write-Host "  │                                                            │" -ForegroundColor Cyan
+    Write-Host "  │  [2] MANUAL — Select an existing partition                │" -ForegroundColor Cyan
+    Write-Host "  │             (Use if you already created one)              │" -ForegroundColor Cyan
+    Write-Host "  └──────────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+    Write-Host ""
+
+    $partitionChoice = Read-Host "  Enter choice (1 or 2) [1]"
+    if ([string]::IsNullOrEmpty($partitionChoice)) { $partitionChoice = '1' }
+
+    if ($partitionChoice -eq '1') {
+        # ── AUTO: Shrink C: and create partition ──
+        Write-Host ""
+        Write-Host "  ── Auto-Partition Configuration ──" -ForegroundColor Yellow
+        Write-Host ""
+
+        $sizeInput = Read-Host "  Recovery partition size in GB [$DefaultShrinkSizeGB]"
+        if ([string]::IsNullOrEmpty($sizeInput)) { $shrinkGB = $DefaultShrinkSizeGB } else { $shrinkGB = [int]$sizeInput }
+
+        $letterInput = Read-Host "  Drive letter [$DefaultNewDriveLetter]"
+        if ([string]::IsNullOrEmpty($letterInput)) { $newLetter = $DefaultNewDriveLetter } else { $newLetter = $letterInput.Trim().ToUpper() }
+
+        $labelInput = Read-Host "  Volume label [$DefaultNewVolumeLabel]"
+        if ([string]::IsNullOrEmpty($labelInput)) { $newLabel = $DefaultNewVolumeLabel } else { $newLabel = $labelInput.Trim() }
+
+        $step0 = Invoke-Step0_CreateRecoveryPartition `
+            -ShrinkSizeGB $shrinkGB `
+            -NewDriveLetter $newLetter `
+            -NewVolumeLabel $newLabel
+
+        if (-not $step0.Success) {
+            Write-Log "Step 0 FAILED. Cannot continue without a recovery partition." "ERROR"
             Read-Host "  Press Enter to exit"
             exit 1
+        }
+
+        $RecoveryDriveLetter = $step0.DriveLetter
+        Write-Log "Recovery partition ready: $RecoveryDriveLetter" "SUCCESS"
+    }
+    else {
+        # ── MANUAL: Select existing partition ──
+        if ([string]::IsNullOrEmpty($RecoveryDriveLetter)) {
+            $RecoveryDriveLetter = Get-RecoveryDrive
+            if ($null -eq $RecoveryDriveLetter) {
+                Write-Log "No recovery partition selected. Exiting." "ERROR"
+                Read-Host "  Press Enter to exit"
+                exit 1
+            }
         }
     }
 
@@ -1708,6 +2041,7 @@ function Main {
     Write-Host "  ┌──────────────────────────────────────────────────────────┐" -ForegroundColor Yellow
     Write-Host "  │  Process:                                                 │" -ForegroundColor Yellow
     Write-Host "  │                                                            │" -ForegroundColor Yellow
+    Write-Host "  │  Step 0  : ✅ Recovery partition ready ($RecoveryDriveLetter)" -ForegroundColor Yellow
     Write-Host "  │  Step 1  : Capture WIM (VSS Shadow Copy)                  │" -ForegroundColor Yellow
     Write-Host "  │  Step 1.5: Generate unattend.xml (silent OOBE)            │" -ForegroundColor Yellow
     Write-Host "  │  Step 2  : Create restore scripts (WinRE-compatible)      │" -ForegroundColor Yellow
