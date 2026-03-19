@@ -14,6 +14,7 @@
     - Unattend.xml for silent OOBE
     - Hidden partition support
     - Desktop shortcuts
+    - FIX: Pipeline output isolation in all functions
 
 .NOTES
     Run as Administrator
@@ -169,7 +170,7 @@ function Invoke-Step0_CreateRecoveryPartition {
     $cFreeSpaceGB = [math]::Round($cVolume.SizeRemaining / 1GB, 2)
     $cTotalSizeGB = [math]::Round($cVolume.Size / 1GB, 2)
     $cUsedGB      = [math]::Round(($cVolume.Size - $cVolume.SizeRemaining) / 1GB, 2)
-    $bufferGB     = 10  # Keep 10GB free after shrink
+    $bufferGB     = 10
 
     Write-Host "    Total Size  : $cTotalSizeGB GB" -ForegroundColor Gray
     Write-Host "    Used Space  : $cUsedGB GB" -ForegroundColor Gray
@@ -183,7 +184,6 @@ function Invoke-Step0_CreateRecoveryPartition {
         Write-Host "    Need at least $($ShrinkSizeGB + $bufferGB) GB free, have $cFreeSpaceGB GB." -ForegroundColor Red
         Write-Host ""
 
-        # Offer custom size
         $maxShrink = [math]::Floor($cFreeSpaceGB - $bufferGB)
         if ($maxShrink -ge 20) {
             Write-Host "    Maximum safe shrink size: $maxShrink GB" -ForegroundColor Yellow
@@ -212,9 +212,9 @@ function Invoke-Step0_CreateRecoveryPartition {
     Write-Host ""
     Write-Host "  ── Checking partition constraints ──" -ForegroundColor Yellow
 
-    $cPartition     = Get-Partition -DriveLetter C
+    $cPartition       = Get-Partition -DriveLetter C
     $currentSizeBytes = $cPartition.Size
-    $newSizeBytes   = $currentSizeBytes - $ShrinkSizeBytes
+    $newSizeBytes     = $currentSizeBytes - $ShrinkSizeBytes
 
     try {
         $supportedSize = Get-PartitionSupportedSize -DriveLetter C
@@ -278,7 +278,6 @@ function Invoke-Step0_CreateRecoveryPartition {
     try {
         Resize-Partition -DriveLetter C -Size $newSizeBytes -ErrorAction Stop
 
-        # Verify
         $updatedPartition = Get-Partition -DriveLetter C
         $updatedSizeGB    = [math]::Round($updatedPartition.Size / 1GB, 2)
         Write-Host "  [✓] C: successfully shrunk to $updatedSizeGB GB." -ForegroundColor Green
@@ -306,10 +305,10 @@ function Invoke-Step0_CreateRecoveryPartition {
     try {
         $diskNumber = (Get-Partition -DriveLetter C).DiskNumber
 
-        $newPartition = New-Partition -DiskNumber $diskNumber `
-                                      -UseMaximumSize `
-                                      -DriveLetter $NewDriveLetter `
-                                      -ErrorAction Stop
+        New-Partition -DiskNumber $diskNumber `
+                      -UseMaximumSize `
+                      -DriveLetter $NewDriveLetter `
+                      -ErrorAction Stop | Out-Null
 
         Write-Host "  [✓] Partition created on Disk $diskNumber with letter ${NewDriveLetter}:." -ForegroundColor Green
         Write-Log "Partition created: Disk $diskNumber, Letter ${NewDriveLetter}:." "SUCCESS"
@@ -332,7 +331,7 @@ function Invoke-Step0_CreateRecoveryPartition {
                       -FileSystem NTFS `
                       -NewFileSystemLabel $NewVolumeLabel `
                       -Confirm:$false `
-                      -ErrorAction Stop
+                      -ErrorAction Stop | Out-Null
 
         Write-Host "  [✓] Format completed successfully." -ForegroundColor Green
         Write-Log "Format completed: NTFS, label '$NewVolumeLabel'." "SUCCESS"
@@ -574,6 +573,9 @@ function Invoke-Step1_CaptureWIM {
     $wimFile      = Join-Path $recoveryPath "install.wim"
     $shadowInfo   = $null
 
+    # Use script-scoped variable to pass result out of try/finally
+    $script:Step1Result = @{ Success = $false; WimFile = $null; Skipped = $false }
+
     try {
         # Create folder
         if (-not (Test-Path $recoveryPath)) {
@@ -589,7 +591,8 @@ function Invoke-Step1_CaptureWIM {
             $overwrite = Read-Host "  Overwrite? (Y/N)"
             if ($overwrite -ne 'Y' -and $overwrite -ne 'y') {
                 Write-Log "Using existing WIM file." "WARNING"
-                return @{ Success = $true; WimFile = $wimFile; Skipped = $true }
+                $script:Step1Result = @{ Success = $true; WimFile = $wimFile; Skipped = $true }
+                return
             }
             Remove-Item $wimFile -Force
         }
@@ -597,13 +600,15 @@ function Invoke-Step1_CaptureWIM {
         # Create shadow copy
         $shadowInfo = New-ShadowCopy
         if ($null -eq $shadowInfo) {
-            return @{ Success = $false; WimFile = $null; Skipped = $false }
+            $script:Step1Result = @{ Success = $false; WimFile = $null; Skipped = $false }
+            return
         }
 
         # Mount shadow copy
         $mounted = Mount-ShadowCopy -ShadowDevicePath $shadowInfo.DevicePath -MountPoint $ShadowMountPoint
         if (-not $mounted) {
-            return @{ Success = $false; WimFile = $null; Skipped = $false }
+            $script:Step1Result = @{ Success = $false; WimFile = $null; Skipped = $false }
+            return
         }
 
         # Capture
@@ -640,24 +645,25 @@ exit /b %errorlevel%
             Write-Host "  └──────────────────────────────────────────────────┘" -ForegroundColor Green
             Write-Host ""
 
-            # Verify
+            # Verify — redirect ALL output to avoid pipeline pollution
             Write-Log "Verifying captured image..." "INFO"
-            & DISM.exe /Get-ImageInfo /ImageFile:"$wimFile"
+            $dismVerify = & DISM.exe /Get-ImageInfo /ImageFile:"$wimFile" 2>&1
+            $dismVerify | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
 
-            return @{ Success = $true; WimFile = $wimFile; Skipped = $false }
+            $script:Step1Result = @{ Success = $true; WimFile = $wimFile; Skipped = $false }
         }
         else {
             Write-Log "DISM capture FAILED! Exit code: $($proc.ExitCode)" "ERROR"
             Write-Host "  Check DISM log: notepad C:\Windows\Logs\DISM\dism.log" -ForegroundColor Yellow
-            return @{ Success = $false; WimFile = $null; Skipped = $false }
+            $script:Step1Result = @{ Success = $false; WimFile = $null; Skipped = $false }
         }
     }
     catch {
         Write-Log "Exception during capture: $_" "ERROR"
-        return @{ Success = $false; WimFile = $null; Skipped = $false }
+        $script:Step1Result = @{ Success = $false; WimFile = $null; Skipped = $false }
     }
     finally {
-        # Always clean up shadow copy
+        # Always clean up shadow copy — redirect ALL output
         Write-Log "Cleaning up shadow copy..." "INFO"
         if ($shadowInfo) {
             Remove-ShadowCopyAndMount -ShadowID $shadowInfo.ID -MountPoint $ShadowMountPoint
@@ -666,6 +672,8 @@ exit /b %errorlevel%
             cmd /c "rmdir `"$ShadowMountPoint`"" 2>$null
         }
     }
+
+    # Return NOTHING from the function body — result is in $script:Step1Result
 }
 
 # ============================================================
@@ -1864,7 +1872,7 @@ function Invoke-Step4_HidePartition {
 
     # Find volume number
     $dpListFile = "$env:TEMP\dp_list.txt"
-    "list volume" | Out-File -FilePath $dpListFile -Encoding ASCII
+    "list volume`nexit" | Out-File -FilePath $dpListFile -Encoding ASCII
     $dpOutput = & diskpart /s $dpListFile 2>&1
     Remove-Item $dpListFile -Force -ErrorAction SilentlyContinue
 
@@ -1894,8 +1902,6 @@ function Invoke-Step4_HidePartition {
     $confirm = Read-Host "  Type 'HIDE' to proceed (anything else to cancel)"
 
     if ($confirm -eq 'HIDE') {
-        # Separate operations for reliability
-
         # Remove letter
         $dp1 = @"
 select volume $volumeNumber
@@ -1903,7 +1909,7 @@ remove letter=$driveLetter
 exit
 "@
         $dp1 | Out-File "$env:TEMP\dp_h1.txt" -Encoding ASCII
-        & diskpart /s "$env:TEMP\dp_h1.txt"
+        & diskpart /s "$env:TEMP\dp_h1.txt" | Out-Null
         Remove-Item "$env:TEMP\dp_h1.txt" -Force -ErrorAction SilentlyContinue
         Start-Sleep -Seconds 2
 
@@ -1914,7 +1920,7 @@ set id=de94bba4-06d1-4d40-a16a-bfd50179d6ac override
 exit
 "@
         $dp2 | Out-File "$env:TEMP\dp_h2.txt" -Encoding ASCII
-        & diskpart /s "$env:TEMP\dp_h2.txt"
+        & diskpart /s "$env:TEMP\dp_h2.txt" | Out-Null
         Remove-Item "$env:TEMP\dp_h2.txt" -Force -ErrorAction SilentlyContinue
         Start-Sleep -Seconds 2
 
@@ -1925,7 +1931,7 @@ gpt attributes=0x8000000000000001
 exit
 "@
         $dp3 | Out-File "$env:TEMP\dp_h3.txt" -Encoding ASCII
-        & diskpart /s "$env:TEMP\dp_h3.txt"
+        & diskpart /s "$env:TEMP\dp_h3.txt" | Out-Null
         Remove-Item "$env:TEMP\dp_h3.txt" -Force -ErrorAction SilentlyContinue
 
         Write-Host ""
@@ -2063,20 +2069,26 @@ function Main {
 
     # ═══════════════════════════════════
     #  STEP 1: Capture WIM
+    #  FIX: Use $script:Step1Result to avoid pipeline pollution
     # ═══════════════════════════════════
-    $step1 = Invoke-Step1_CaptureWIM `
+    Invoke-Step1_CaptureWIM `
         -RecoveryDrive $RecoveryDriveLetter `
         -FolderName $RecoveryFolderName `
         -Name $ImageName `
         -Description $ImageDescription `
         -Compression $CompressionType
 
-    if (-not $step1.Success) {
+    # Retrieve result from script-scoped variable (set inside the function)
+    $step1 = $script:Step1Result
+
+    if (-not $step1 -or -not $step1.Success) {
         Write-Log "Step 1 FAILED. Check DISM log." "ERROR"
         Write-Host "  notepad C:\Windows\Logs\DISM\dism.log" -ForegroundColor Yellow
         Read-Host "  Press Enter to exit"
         exit 1
     }
+
+    Write-Log "Step 1 completed. WIM: $($step1.WimFile)" "SUCCESS"
 
     # ═══════════════════════════════════
     #  STEP 1.5: Unattend.xml
