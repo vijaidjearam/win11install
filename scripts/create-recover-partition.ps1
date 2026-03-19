@@ -1,4 +1,4 @@
-Requires -RunAsAdministrator
+#Requires -RunAsAdministrator
 <#
 .SYNOPSIS
     Windows 11 Recovery Partition Creator — Final Version
