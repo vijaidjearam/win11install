@@ -785,7 +785,7 @@ function Schedule-RebootAndContinue {
     Write-LoggedHost
     Stop-DriverInstallProcesses -Silent | Out-Null
     $State.RebootCount++; Set-ScriptState -State $State
-    $cmd = "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$Script:PersistentScript`""
+    $cmd = "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Normal -File `"$Script:PersistentScript`""
     $ok = Set-RunOnceEntry -Name $Script:RunOnceName -Command $cmd
     if (-not $ok) { Set-RunOnceTask -Name "$($Script:RunOnceName)_Task" -ScriptPath $Script:PersistentScript | Out-Null }
     for ($i = 15; $i -ge 1; $i--) {
