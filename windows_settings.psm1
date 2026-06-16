@@ -1287,3 +1287,185 @@ function Create-ScheduledShutdown {
 
     Register-ScheduledTask -TaskName $taskName -Trigger $trigger -Principal $principal -Action $action -Settings $settings -Force
 }
+# ============================================================
+# OneDrive Auto-Sync Control Functions
+# Author: IT Admin
+# Description: Enable/Disable OneDrive auto-sync at sign-in
+# Requires: Administrator privileges
+# ============================================================
+
+function Disable-OneDriveAutoSyncAtSignIn {
+    [CmdletBinding()]
+    param (
+        [switch]$Verbose
+    )
+
+    Write-Host "============================================" -ForegroundColor Cyan
+    Write-Host "  Disabling OneDrive Auto-Sync at Sign-in  " -ForegroundColor Cyan
+    Write-Host "============================================" -ForegroundColor Cyan
+
+    # Check if running as Administrator
+    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
+    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        Write-Host "`n[ERROR] This function requires Administrator privileges!" -ForegroundColor Red
+        Write-Host "        Please run PowerShell as Administrator." -ForegroundColor Yellow
+        return
+    }
+
+    # Define Registry Path and Values
+    $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"
+    $valueName    = "PreventNetworkTrafficPreUserSignIn"
+    $valueData    = 1
+
+    try {
+
+        # Create registry key if it does not exist
+        if (-not (Test-Path $registryPath)) {
+            Write-Host "`n[INFO] Registry path not found. Creating it..." -ForegroundColor Yellow
+            New-Item -Path $registryPath -Force | Out-Null
+            Write-Host "[OK]   Registry path created successfully." -ForegroundColor Green
+        } else {
+            Write-Host "`n[OK]   Registry path already exists." -ForegroundColor Green
+        }
+
+        # Set the registry value
+        Set-ItemProperty -Path $registryPath -Name $valueName -Value $valueData -Type DWord -Force
+        Write-Host "[OK]   Registry value set successfully." -ForegroundColor Green
+
+        # Verify the value was set correctly
+        $verify = Get-ItemProperty -Path $registryPath -Name $valueName -ErrorAction SilentlyContinue
+        if ($verify.$valueName -eq 1) {
+            Write-Host "[OK]   Verification passed. Value confirmed = 1" -ForegroundColor Green
+        } else {
+            Write-Host "[WARN] Verification failed. Please check manually." -ForegroundColor Yellow
+        }
+
+        # Stop OneDrive if currently running
+        $oneDriveProcess = Get-Process -Name "OneDrive" -ErrorAction SilentlyContinue
+        if ($oneDriveProcess) {
+            Write-Host "[INFO] OneDrive is currently running. Stopping it..." -ForegroundColor Yellow
+            Stop-Process -Name "OneDrive" -Force
+            Write-Host "[OK]   OneDrive process stopped." -ForegroundColor Green
+        } else {
+            Write-Host "[INFO] OneDrive is not currently running." -ForegroundColor Gray
+        }
+
+        Write-Host "`n============================================" -ForegroundColor Cyan
+        Write-Host "  SUCCESS: OneDrive Auto-Sync DISABLED      " -ForegroundColor Green
+        Write-Host "============================================" -ForegroundColor Cyan
+        Write-Host "`n  - OneDrive will NOT auto-sync at login" -ForegroundColor White
+        Write-Host "  - Students CAN still use OneDrive manually" -ForegroundColor White
+        Write-Host "  - Restart or logoff required to take effect`n" -ForegroundColor White
+
+    } catch {
+        Write-Host "`n[ERROR] Something went wrong!" -ForegroundColor Red
+        Write-Host "        $_" -ForegroundColor Red
+    }
+}
+
+
+# ============================================================
+
+
+function Enable-OneDriveAutoSyncAtSignIn {
+    [CmdletBinding()]
+    param ()
+
+    Write-Host "============================================" -ForegroundColor Cyan
+    Write-Host "  Enabling OneDrive Auto-Sync at Sign-in   " -ForegroundColor Cyan
+    Write-Host "============================================" -ForegroundColor Cyan
+
+    # Check if running as Administrator
+    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
+    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        Write-Host "`n[ERROR] This function requires Administrator privileges!" -ForegroundColor Red
+        Write-Host "        Please run PowerShell as Administrator." -ForegroundColor Yellow
+        return
+    }
+
+    # Define Registry Path and Values
+    $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"
+    $valueName    = "PreventNetworkTrafficPreUserSignIn"
+
+    try {
+
+        # Check if registry path exists
+        if (-not (Test-Path $registryPath)) {
+            Write-Host "`n[INFO] Registry path does not exist." -ForegroundColor Yellow
+            Write-Host "[INFO] OneDrive Auto-Sync is already enabled by default." -ForegroundColor Green
+            return
+        }
+
+        # Check if the value exists
+        $existingValue = Get-ItemProperty -Path $registryPath -Name $valueName -ErrorAction SilentlyContinue
+        if ($null -eq $existingValue) {
+            Write-Host "`n[INFO] Registry value not found." -ForegroundColor Yellow
+            Write-Host "[INFO] OneDrive Auto-Sync is already enabled by default." -ForegroundColor Green
+            return
+        }
+
+        # Remove the registry value
+        Remove-ItemProperty -Path $registryPath -Name $valueName -Force
+        Write-Host "`n[OK]   Registry value removed successfully." -ForegroundColor Green
+
+        # Verify removal
+        $verify = Get-ItemProperty -Path $registryPath -Name $valueName -ErrorAction SilentlyContinue
+        if ($null -eq $verify) {
+            Write-Host "[OK]   Verification passed. Value has been removed." -ForegroundColor Green
+        } else {
+            Write-Host "[WARN] Verification failed. Please check manually." -ForegroundColor Yellow
+        }
+
+        # Check if OneDrive key is now empty, clean it up
+        $remainingValues = Get-Item -Path $registryPath | Select-Object -ExpandProperty Property
+        if ($remainingValues.Count -eq 0) {
+            Write-Host "[INFO] OneDrive registry key is now empty. Cleaning up..." -ForegroundColor Gray
+            Remove-Item -Path $registryPath -Force
+            Write-Host "[OK]   Empty registry key removed." -ForegroundColor Green
+        }
+
+        Write-Host "`n============================================" -ForegroundColor Cyan
+        Write-Host "  SUCCESS: OneDrive Auto-Sync ENABLED       " -ForegroundColor Green
+        Write-Host "============================================" -ForegroundColor Cyan
+        Write-Host "`n  - OneDrive WILL auto-sync at login" -ForegroundColor White
+        Write-Host "  - Restart or logoff required to take effect`n" -ForegroundColor White
+
+    } catch {
+        Write-Host "`n[ERROR] Something went wrong!" -ForegroundColor Red
+        Write-Host "        $_" -ForegroundColor Red
+    }
+}
+
+
+# ============================================================
+# Helper function to check current status
+# ============================================================
+
+function Get-OneDriveAutoSyncStatus {
+
+    Write-Host "`n============================================" -ForegroundColor Cyan
+    Write-Host "  OneDrive Auto-Sync Current Status        " -ForegroundColor Cyan
+    Write-Host "============================================" -ForegroundColor Cyan
+
+    $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"
+    $valueName    = "PreventNetworkTrafficPreUserSignIn"
+
+    if (Test-Path $registryPath) {
+        $value = Get-ItemProperty -Path $registryPath -Name $valueName -ErrorAction SilentlyContinue
+        if ($value.$valueName -eq 1) {
+            Write-Host "`n  Status : " -NoNewline -ForegroundColor White
+            Write-Host "DISABLED" -ForegroundColor Red
+            Write-Host "  Meaning: OneDrive will NOT auto-sync at login`n" -ForegroundColor Gray
+        } else {
+            Write-Host "`n  Status : " -NoNewline -ForegroundColor White
+            Write-Host "ENABLED" -ForegroundColor Green
+            Write-Host "  Meaning: OneDrive WILL auto-sync at login`n" -ForegroundColor Gray
+        }
+    } else {
+        Write-Host "`n  Status : " -NoNewline -ForegroundColor White
+        Write-Host "ENABLED (Default)" -ForegroundColor Green
+        Write-Host "  Meaning: No policy set. OneDrive WILL auto-sync at login`n" -ForegroundColor Gray
+    }
+}
