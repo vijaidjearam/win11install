@@ -3253,7 +3253,13 @@ function InstallOneDriveForAllUsers {
 
         Write-Host "OneDrive has been successfully provisioned for all users!" -ForegroundColor Green
 	# after onedrive is installed it creates a shortcut on the desktop , which needs to be removed before the profile is copied to default profile . remove the The shortcut ::{018D5C66-4533-4307-9B53-224DE2ED1FE6} is a special system shortcut for OneDrive. It may not appear as a regular .lnk file but as a shell shortcut.
-	Remove-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" -Force
+	$odNamespace = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{018D5C66-4533-4307-9B53-224DE2ED1FE6}"
+		if (Test-Path $odNamespace) {
+		    Remove-Item -Path $odNamespace -Force -ErrorAction SilentlyContinue
+		    Write-Host "Removed OneDrive desktop namespace shortcut." -ForegroundColor Green
+		} else {
+		    Write-Host "OneDrive desktop namespace shortcut not present, skipping." -ForegroundColor DarkGray
+		}
     } catch {
         Write-Host "Error: Failed to provision OneDrive for all users." -ForegroundColor Red
         Write-Host $_.Exception.Message -ForegroundColor Yellow
