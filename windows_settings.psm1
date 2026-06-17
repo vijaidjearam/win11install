@@ -1296,9 +1296,7 @@ function Create-ScheduledShutdown {
 
 function Disable-OneDriveAutoSyncAtSignIn {
     [CmdletBinding()]
-    param (
-        [switch]$Verbose
-    )
+    param ()
 
     Write-Host "============================================" -ForegroundColor Cyan
     Write-Host "  Disabling OneDrive Auto-Sync at Sign-in  " -ForegroundColor Cyan
