@@ -3534,7 +3534,7 @@ $Keep = @(
     'Microsoft.WindowsStore'
     'Microsoft.WindowsCalculator'
     'Microsoft.Windows.Photos'
-    'Microsoft.MSPaint'
+    'Microsoft.Paint'
     'Microsoft.MicrosoftEdge.Stable'
     'AppUp.IntelGraphicsExperience'
     'AppUp.IntelOptaneMemoryandStorageManagement'
