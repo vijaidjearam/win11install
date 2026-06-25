@@ -1283,7 +1283,7 @@ function Create-ScheduledShutdown {
     $trigger = New-ScheduledTaskTrigger -Daily -At $time
     $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType ServiceAccount -RunLevel Highest
     $action = New-ScheduledTaskAction @actionArgs
-    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopOnIdleEnd
+    $settings = New-ScheduledTaskSettingsSet -DontStopOnIdleEnd
 
     Register-ScheduledTask -TaskName $taskName -Trigger $trigger -Principal $principal -Action $action -Settings $settings -Force
 }
